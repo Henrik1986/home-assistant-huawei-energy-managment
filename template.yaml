@@ -21,6 +21,10 @@
 
 
 
+
+---------------------------------------------------------------------------------------------------------
+
+
 # TAR FRAM ETT LADDNINGSINTERVALL DIREKT EFTER ATT ELPRISERNA BLEV TILLGÄNGLIGA
 # SÖKER MELLAN 14-16 DÅ ELPRISER BRUKAR VARA TILLGÄNGLIGA VID 14
 - trigger:
@@ -98,10 +102,6 @@
                     Inget lämpligt intervall hittades.
           {%- endif %}
 
-
-
-
-
 # TAR FRAM ETT LADDNINGSINTERVALL DIREKT EFTER ATT ELPRISERNA BLEV TILLGÄNGLIGA
 # SÖKER MELLAN 23 IDAG TILL 05 IMOROGN
 - trigger:
@@ -146,3 +146,14 @@
           {%- else %}
                     Ingen giltigt intervall hittades
           {%- endif %}
+
+
+----------------------------------------------------------------------------------------------
+
+
+# TAR FRAM OM NYA ELPRISER ÄR TILLGÄNGLIGA
+- binary_sensor:
+      - name: "Nordpool Tomorrow Prices Available"
+        unique_id: "nordpool_tomorrow_prices_available"
+        state: >
+          {{ state_attr('sensor.nordpool_kwh_se4_sek_1_10_0', 'tomorrow_valid') == true }}
