@@ -7,11 +7,16 @@ Min setup bygger på sensorer från Huawei Solar Integration (https://github.com
 - Smart energimätare (Huawei)
 - Laddbox (Wallbox Pulsar Max)
 
-<b>Steg 1</b>
-Skapa först en sensor som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen. Skapa en sensor template sensor som du namger huseffekt_exl_elbil. Skapa därefter en sensor som ackumulerar kWh som du namnger energy_total_exl_elbil. 
+Steg 1: Skapa en template som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen ge den namnet: huseffekt_exl_elbil. Skapa därefter en sensor som ackumulerar kWh som du namnger energy_total_exl_elbil. 
 
-Steg 2
-Skapa SQL-sensorer för att följa din energiförbrukning. Observera att du behöver ersätta sensor.energy_total_exl_elbil om du valde något annat namn. 
+Steg 2: Skapa SQL-sensorer för att följa din energiförbrukning. 
+Observera att du behöver ersätta sensor.energy_total_exl_elbil om du valde något annat namn. 
 
-Steg 3
-Skapa en command line sensor för att solelsprognos. (https://forecast.solar/)
+Steg 3: Skapa en command line sensor för solelsprognos (https://forecast.solar/)
+Observer att du behöver ersätta sensor.solar_forecast_west i resten av koden om du väljer något annat namn.
+
+Steg 4: Skapa template sensorer som söker upp laddningsfönster (observera att template sensorerna ska ha en trigger). Logiken bakom laddningsfönsterna går att styra vi UI. 
+Skapa en input_number 
+- battery_charge_duration_hours
+
+Du behöver även lägga in din Nordpool sensor i template koden (min äf i SEK/kWh). 
