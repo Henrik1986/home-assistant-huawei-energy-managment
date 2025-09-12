@@ -1,0 +1,6 @@
+  - platform: integration
+    source: sensor.huseffekt_exl_elbil
+    name: energy_total_exl_elbil
+    #unit_prefix: k
+    round: 2
+    method: trapezoidal
