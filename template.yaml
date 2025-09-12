@@ -156,4 +156,4 @@
       - name: "Nordpool Tomorrow Prices Available"
         unique_id: "nordpool_tomorrow_prices_available"
         state: >
-          {{ state_attr('sensor.nordpool_kwh_se4_sek_1_10_0', 'tomorrow_valid') == true }}
+          {{ state_attr('sensor.YOUR_NORDPOOL_SENSOR', 'tomorrow_valid') == true }}
