@@ -14,3 +14,4 @@ Steg 2
 Skapa SQL-sensorer för att följa din energiförbrukning. Observera att du behöver ersätta sensor.energy_total_exl_elbil om du valde något annat namn. 
 
 Steg 3
+Skapa en command line sensor för att solelsprognos. (https://forecast.solar/)
