@@ -12,8 +12,8 @@ Laddbox (https://www.home-assistant.io/integrations/wallbox/)
 Steg 1: Skapa en template som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen  - ge den namnet: huseffekt_exl_elbil. Skapa därefter en sensor som ackumulerar kWh som du namnger energy_total_exl_elbil. 
 
 Steg 2: Skapa SQL-sensorer (integration) för att följa din energiförbrukning. 
-Kolumn: avg_kwh_per_hour
-Måttenhet: kWh/h
+- Kolumn: avg_kwh_per_hour
+- Måttenhet: kWh/h
 
 Observera att du behöver ersätta sensor.energy_total_exl_elbil om du valde något annat namn. 
 
