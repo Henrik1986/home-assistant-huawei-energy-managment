@@ -1,0 +1,11 @@
+alias: "Batteri – Hämtar nya laddningsintervall"
+mode: single
+trigger:
+  - platform: state
+    entity_id: binary_sensor.nordpool_tomorrow_prices_available
+    from: 'off'
+    to: 'on'
+action:
+  - service: input_button.press
+    target:
+      entity_id: input_button.update_battery_cheapest_charge
