@@ -7,7 +7,7 @@ Min setup bygger på sensorer från Huawei Solar Integration (https://github.com
 - Smart energimätare (Huawei)
 - Laddbox (Wallbox Pulsar Max)
 
-Steg 1
+- Steg 1
 Skapa först en sensor som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen. Skapa en sensor template sensor som du namger huseffekt_exl_elbil. Skapa därefter en sensor som ackumulerar kWh som du namnger energy_total_exl_elbil. 
 
 Steg 2
