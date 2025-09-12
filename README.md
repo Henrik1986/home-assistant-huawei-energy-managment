@@ -19,4 +19,4 @@ Steg 4: Skapa template sensorer som söker upp laddningsfönster (observera att 
 Skapa en input_number 
 - battery_charge_duration_hours
 
-Du behöver även lägga in din Nordpool sensor i template koden (min äf i SEK/kWh). 
+Du behöver även lägga in din Nordpool sensor i template koden (min är i SEK/kWh). 
