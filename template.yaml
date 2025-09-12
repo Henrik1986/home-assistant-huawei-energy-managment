@@ -1,0 +1,19 @@
+    - name: huseffekt_exl_elbil
+      unique_id: huseffekt_exl_elbil
+      unit_of_measurement: "kW"
+      state: >
+        {% set net_power = states('sensor.power_meter_active_power') | float(0) %}
+        {% set import = -net_power if net_power < 0 else 0 %}
+        {% set export = net_power if net_power > 0 else 0 %}
+        {% set elbil = states('sensor.ADD_YOUR_WALLBOX_W') | float(0) %}  #ADD YOUR OWN WALLBOX SENSOR IN kW
+        {% set batt = states('sensor.batteries_charge_discharge_power') | float(0) %}
+        {% set solar = states('sensor.input_power_with_efficiency_loss_kw') | float(0) %}
+
+        {# Batteriurladdning hjälper huset, batteriladdning ska dras bort #}
+        {% set batt_out = -batt if batt < 0 else 0 %}
+        {% set batt_in = batt if batt > 0 else 0 %}
+
+        {# Huseffekt = solel + köpt el + urladdning - export - elbil - batteriladdning #}
+        {% set huseffekt = (solar + import + batt_out) - (export + elbil + batt_in) %}
+
+        {{ [huseffekt, 0] | max | round(2) }}
