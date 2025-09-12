@@ -1,0 +1,16 @@
+SELECT AVG(e_kwh) / 5.0 as avg_kwh_per_hour
+FROM (
+    SELECT
+        (
+          MAX(CASE WHEN strftime('%H', datetime(start_ts, 'unixepoch', 'localtime')) = '15' THEN sum ELSE NULL END)
+          -
+          MAX(CASE WHEN strftime('%H', datetime(start_ts, 'unixepoch', 'localtime')) = '10' THEN sum ELSE NULL END)
+        ) as e_kwh
+    FROM statistics
+    INNER JOIN statistics_meta
+        ON statistics.metadata_id = statistics_meta.id
+    WHERE statistics_meta.statistic_id = 'sensor.energy_total_exl_elbil'
+      AND datetime(start_ts, 'unixepoch') >= datetime('now', '-3 day')
+    GROUP BY strftime('%Y-%m-%d', datetime(start_ts, 'unixepoch', 'localtime'))
+    HAVING e_kwh IS NOT NULL
+)
