@@ -25,3 +25,5 @@ Steg 5: Skapa en input_button för uppdateringen av nya laddningsfönster.
 - update_battery_cheapest_charge
 
 Steg 6: Skapa en template som håller koll på om nya elpriser finns tillgängliga. Observera att denna ska ligga som en binary_sensor. Ersätt med din Nordpool-sensor.
+
+Steg 7: Skapa en automation (battery_update_charge_interval.yaml) som styr uppdateringen av nya laddningsfönster
