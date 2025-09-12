@@ -15,7 +15,7 @@ Steg 2: Skapa SQL-sensorer (integration) för att följa din energiförbrukning.
 - Kolumn: avg_kwh_per_hour
 - Måttenhet: kWh/h
 
-Observera att du behöver ersätta sensor.energy_total_exl_elbil om du valde något annat namn. 
+Observera att du behöver ersätta sensor.energy_total_exl_elbil om du valde något annat namn i steg 1. 
 
 Steg 3: Skapa en command line sensor för solelsprognos (https://forecast.solar/)
 Observer att du behöver ersätta sensor.solar_forecast_west i resten av koden om du väljer något annat namn.
