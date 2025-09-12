@@ -1,0 +1,18 @@
+- sensor:
+    scan_interval: 3610
+    name: Solar Forecast West
+    command: "curl -s 'https://api.forecast.solar/estimate/:lat/:lon/:dec/:az/:kwp?time=iso8601' -H 'accept: text/csv' -H 'X-Delimiter: |' -H 'X-Separator: ;' | jq --raw-input '{ west: [(inputs | split(\";\")) | {label: .[0], date: .[1], values: .[2] | gsub(\"[\\r]\"; \"\") | tonumber } ] | group_by(.label) | map({ key: (.[0].label), value: [.[] ] }) | from_entries }' "    
+    value_template: "OK"
+    json_attributes:
+        - west
+
+
+  # https://api.forecast.solar/estimate/:lat/:lon/:dec/:az/:kwp 
+  
+  # :apikey - personal API key for registered users; string
+  #:lat - latitude of location, -90 (south) … 90 (north); handeled with a precission of 0.0001 or abt. 10 m
+  #:lon - longitude of location, -180 (west) … 180 (east); handeled with a precission of 0.0001 or abt. 10 m
+  #:dec - plane declination, 0 (horizontal) … 90 (vertical) - always in relation to the earth's surface; integer
+  #:az - plane azimuth, -180 … 180 (-180 = north, -90 = east, 0 = south, 90 = west, 180 = north); integer
+  #:kwp - installed modules power in kilo watt; float
+  # https://doc.forecast.solar/api:estimate 
