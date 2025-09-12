@@ -17,3 +17,132 @@
         {% set huseffekt = (solar + import + batt_out) - (export + elbil + batt_in) %}
 
         {{ [huseffekt, 0] | max | round(2) }}
+
+
+
+
+# TAR FRAM ETT LADDNINGSINTERVALL DIREKT EFTER ATT ELPRISERNA BLEV TILLGÄNGLIGA
+# SÖKER MELLAN 14-16 DÅ ELPRISER BRUKAR VARA TILLGÄNGLIGA VID 14
+- trigger:
+  - trigger: state
+    entity_id: input_button.update_battery_cheapest_charge
+  sensor:
+      - name: "battery_charge_window_cheapest_1a"
+        state: >
+          {%- set duration = states('input_number.battery_charge_duration_hours') | int %}
+          {%- set prices_today = state_attr('sensor.YOUR_NORDPOOL_SENSOR', 'raw_today') %}
+          {%- if duration >= 1 and prices_today is not none and prices_today | length >= (14 + duration) %}
+            {%- set ns = namespace(min_avg=None, start_index=none) %}
+            {%- set start_index = 14 %}
+            {%- set end_index = 16 - duration %}
+            {%- for i in range(start_index, end_index + 1) %}
+              {%- set slice = prices_today[i:i + duration] %}
+              {%- if slice | length == duration %}
+                {%- set values = slice | map(attribute='value') | list %}
+                {%- set avg = (values | sum) / duration %}
+                {%- if ns.min_avg is none or avg < ns.min_avg %}
+                  {%- set ns.min_avg = avg %}
+                  {%- set ns.start_index = i %}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+            {%- if ns.start_index is not none %}
+              {%- set start_time = (now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(hours=ns.start_index)).astimezone() %}
+              {%- set end_time = start_time + timedelta(hours=duration) %}
+              {{ start_time.isoformat() ~ ' - ' ~ end_time.isoformat() }}
+            {%- else %}
+              unavailable
+            {%- endif %}
+          {%- else %}
+            unavailable
+          {%- endif %}
+
+
+# TAR FRAM ETT LADDNINGSINTERVALL DIREKT EFTER ATT ELPRISERNA BLEV TILLGÄNGLIGA
+# SÖKER MELLAN 11-14 IMORGON. SENSORN ANVÄNDS FÖR ATT SKAPA EN BERÄKNINGSPUNKT FÖR ATT ESTIMERA LADDNING2
+- trigger:
+  - trigger: state
+    entity_id: input_button.update_battery_cheapest_charge
+  sensor:
+      - name: "battery_charge_window_cheapest_1b"
+        state: >
+          {%- set numberOfSequentialHours = states('input_number.battery_charge_duration_hours') | int %}
+          {%- set prices_tomorrow = state_attr('sensor.YOUR_NORDPOOL_SENSOR', 'raw_tomorrow') or [] %}
+          {%- set ns = namespace(min_avg=None, start_index=0) %}
+
+          {#          DEBUG: Laddar priser för 11:00 till 14:00 imorgon          #}
+          {%- set filtered_prices = prices_tomorrow[11:14] %}
+
+          {#          DEBUG: Filtered prices count = {{ filtered_prices | length }}          #}
+
+          {%- for i in range(0, filtered_prices | length - numberOfSequentialHours + 1) %}
+                    {%- set slice = filtered_prices[i:i + numberOfSequentialHours] %}
+                    {%- set avg = (slice | map(attribute='value') | list | sum) / numberOfSequentialHours %}
+                    {%- if ns.min_avg is none or avg < ns.min_avg %}
+                              {%- set ns.min_avg = avg %}
+                              {%- set ns.start_index = i %}
+                    {%- endif %}
+          {%- endfor %}
+
+          {%- if (filtered_prices | count) >= (ns.start_index + numberOfSequentialHours) %}
+                    {%- set start_obj = filtered_prices[ns.start_index] %}
+                    {%- set end_obj = filtered_prices[ns.start_index + numberOfSequentialHours - 1] %}
+                    {%- if as_datetime(end_obj.end).hour > 14 %}
+                              Inget lämpligt intervall hittades.
+                    {%- else %}
+                              {%- set start_str = (start_obj.start | as_local).strftime('%Y-%m-%dT%H:%M:%S%z') %}
+                              {%- set end_str = (end_obj.end | as_local).strftime('%Y-%m-%dT%H:%M:%S%z') %}
+                              {{ start_str[:-2] ~ ':' ~ start_str[-2:] }} - {{ end_str[:-2] ~ ':' ~ end_str[-2:] }}
+                    {%- endif %}
+          {%- else %}
+                    Inget lämpligt intervall hittades.
+          {%- endif %}
+
+
+
+
+
+# TAR FRAM ETT LADDNINGSINTERVALL DIREKT EFTER ATT ELPRISERNA BLEV TILLGÄNGLIGA
+# SÖKER MELLAN 23 IDAG TILL 05 IMOROGN
+- trigger:
+  - trigger: state
+    entity_id: input_button.update_battery_cheapest_charge
+  sensor:
+      - name: "battery_charge_window_cheapest_2"
+        state: >
+          {%- set numberOfSequentialHours = states('input_number.battery_charge_duration_hours') | int %}
+          {%- set prices_today = state_attr('sensor.YOUR_NORDPOOL_SENSOR', 'raw_today') or [] %}
+          {%- set prices_tomorrow = state_attr('sensor.YOUR_NORDPOOL_SENSOR', 'raw_tomorrow') or [] %}
+          {%- set ns = namespace(min_avg=None, start_index=0) %}
+
+          {# Ta priser från idag från kl 23 #}
+          {%- set prices_today_filtered = prices_today[23:] %}
+
+          {# Ta morgondagens priser upp till kl 05 (index 0 till 5 inkl) #}
+          {%- set prices_tomorrow_filtered = prices_tomorrow[0:6] %}
+
+          {# Kombinera listorna #}
+          {%- set combined_prices = prices_today_filtered + prices_tomorrow_filtered %}
+
+          {# Sök billigaste intervall #}
+          {%- for i in range(0, combined_prices | length - numberOfSequentialHours + 1) %}
+                    {%- set slice = combined_prices[i:i + numberOfSequentialHours] %}
+                    {%- set avg = (slice | map(attribute='value') | list | sum) / numberOfSequentialHours %}
+                    {%- if ns.min_avg is none or avg < ns.min_avg %}
+                              {%- set ns.min_avg = avg %}
+                              {%- set ns.start_index = i %}
+                    {%- endif %}
+          {%- endfor %}
+
+          {%- if combined_prices | length >= numberOfSequentialHours and ns.start_index + numberOfSequentialHours - 1 < combined_prices | length %}
+                    {%- set start_obj = combined_prices[ns.start_index] %}
+                    {%- set end_obj = combined_prices[ns.start_index + numberOfSequentialHours - 1] %}
+
+                    {# Konvertera till ISO-format med kolon i tidszonen #}
+                    {%- set start_str = start_obj.start.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+                    {%- set end_str = end_obj.end.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+
+                    {{ start_str[:-2] ~ ':' ~ start_str[-2:] }} - {{ end_str[:-2] ~ ':' ~ end_str[-2:] }}
+          {%- else %}
+                    Ingen giltigt intervall hittades
+          {%- endif %}
