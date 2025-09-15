@@ -1,9 +1,7 @@
 # Home Assistant Huawei Energy Managment
 Code examples for Home Assistant energy management. Focus on optimizing self-consumption, reducing costs, and improving efficiency with batteries, solar, and EV charging. Hobby project – shared as-is, use at your own risk.
 
-<img width="1812" height="814" alt="Skärmbild 2025-09-15 221922" src="https://github.com/user-attachments/assets/36321474-aa4d-4384-b6cf-5126dd4b973d" />
-Bilden ovan är en skärmbild från min vy i Home Assistant där jag ställer in parametrar 
-
+Min setup
 Huawei Solar Integration (https://github.com/wlcrs/huawei_solar)
 - Solceller
 - Batteri
@@ -11,6 +9,8 @@ Huawei Solar Integration (https://github.com/wlcrs/huawei_solar)
 
 Laddbox (https://www.home-assistant.io/integrations/wallbox/)
 - Wallbox Pulsar Max 
+
+<img width="1812" height="814" alt="Skärmbild 2025-09-15 221922" src="https://github.com/user-attachments/assets/36321474-aa4d-4384-b6cf-5126dd4b973d" /> Bilden ovan är en skärmbild från min vy i Home Assistant där jag justera logiken. 
 
 Steg 1: Skapa en template som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen  - ge den namnet: huseffekt_exl_elbil. Skapa därefter en sensor som ackumulerar kWh som du namnger energy_total_exl_elbil. 
 
