@@ -2,6 +2,7 @@
 Code examples for Home Assistant energy management. Focus on optimizing self-consumption, reducing costs, and improving efficiency with batteries, solar, and EV charging. Hobby project – shared as-is, use at your own risk.
 
 Min setup
+
 Huawei Solar Integration (https://github.com/wlcrs/huawei_solar)
 - Solceller
 - Batteri
