@@ -1,6 +1,6 @@
   - platform: integration
     source: sensor.huseffekt_exl_elbil
     name: energy_total_exl_elbil
-    #unit_prefix: k
+    #unit_prefix: k #avkommentera om din sensor är i W
     round: 2
     method: trapezoidal
