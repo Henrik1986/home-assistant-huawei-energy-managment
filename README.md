@@ -62,6 +62,8 @@ Detta hittar du under utvecklarverktyg -> åtgärder -> klicka på åtgärd -> s
 Steg 12: Skapa en input_boolean (via helper) som avaktiverar samtliga automationer för att kunna ladda nu. Namge ge den med följande namn: 
 - manual_charge
 
+Steg 13: Skapa en templete sensor (se template.yaml) som söker upp ett superbilligt laddningsfönster om solprognosen är låg och batteriet är dåligt laddat. Syftet med detta intervall är att inte vissa ett superbilligt elpris och då solelen inte räcker till och batterinivån är låg. Template sensorn har nedanstående namn och finns i filen template.yaml
+
 
 
 
