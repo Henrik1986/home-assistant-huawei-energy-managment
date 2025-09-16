@@ -17,7 +17,7 @@ Steg 1: Skapa en template (se template.yaml) som håller koll på husets aktuell
 Min kod förutsätter att du har en smartmätare via Huawei intergrationen samt att du justerat dayily_yail enligt följande: https://github.com/wlcrs/huawei_solar/wiki/Daily-Solar-Yield#a-better-approach
 Om din setup ser ut på annat sätt kan du utgå från koden (se template.yaml) för att skapa en sensor som håller koll på husets aktuella effekt. 
 
-Steg 2: Skapa SQL-sensorer (se sql-sensor) för att följa din energiförbrukning. Du skapar SQL-sensorer via integrationer. (https://www.home-assistant.io/integrations/sql/)
+Steg 2: Skapa SQL-sensorer (se sql-sensor) för att följa din energiförbrukning. Mina SQL-sensorer beräknar kWh/h utifrån din förbrukning de senaste 3 dagarna. Detta värde går att justera i koden. Du skapar SQL-sensorer via integrationer. (https://www.home-assistant.io/integrations/sql/)
 Ange följande + frågan som finns i filerna i mappen sql-sensor
 - Kolumn: avg_kwh_per_hour
 - Måttenhet: kWh/h
