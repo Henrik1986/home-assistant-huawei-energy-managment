@@ -39,8 +39,8 @@ Steg 5: Skapa två input_number (via helper). Ge dem följande namn:
 Steg 6: Skapa en input_button (via helper) för uppdateringen av laddningsfönster. Knappen bidrar till smidig manuell uppdatering, men även för den automatiska uppdateringen. Ge den följande namn: 
 - update_battery_cheapest_charge
 
-Steg 7: Skapa en template (se template.yaml) som håller koll på om nya elpriser finns tillgängliga. Observera att denna ska ligga som en binary_sensor under template. Lägg in din Nordpool-sensor i koden. 
+Steg 7: Skapa en template sensor (se template.yaml) som håller koll på om nya elpriser finns tillgängliga. Observera att denna ska ligga som en binary_sensor under template. Lägg in din Nordpool-sensor i koden. 
 
-Steg 8: Skapa en automation (battery_update_charge_interval.yaml i mappen automations) som styr uppdateringen av laddningsfönsterna. När du gjort detta har du tre laddningsfönster som uppdateras när nya elpriser släpps och som ska användas för att ladda batteriet. Deras namn hittar du i steg 4. 
+Steg 8: Skapa en automation (battery_update_charge_interval.yaml i mappen automations) som styr uppdateringen av laddningsfönsterna. När du gjort detta har du tre laddningsfönster som uppdateras när nya elpriser släpps och som ska användas för att ladda batteriet. Sensorernas namn hittar du i steg 4. 
 
 Med en apex-chart kan du på ett visuellt tydligt sätt synliggöra laddningsfönster, prognos för solel och elpriser. Exmpelkod finns under Apex-chart. 
