@@ -49,7 +49,10 @@ Steg 10: Skapa en input_number (via helper) för att addera kWh till energibehov
 - battery_buffer_kwh
 
 Steg 11: Skapa två automationer som kommer att styra om batteriet ska laddas eller inte. I mappen automations heter dessa 
-- 
+- battery_luna_2000_S1_interval_1a_2.yaml
+- battery_luna_2000_S1_interval_2_1b.yaml
+
+Automationerna är byggda utifrån Huawei integrationen och utifrån batteriet Luna2000 - S1. Om du har en annan setup får du justera automationerna utifrån det. Har du samma setup behöver du bara lägga till ditt ID. Detta hittar du .....
 
 
 
