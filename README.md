@@ -43,9 +43,13 @@ Steg 7: Skapa en template sensor (se template.yaml) som håller koll på om nya 
 
 Steg 8: Skapa en automation (battery_update_charge_interval.yaml i mappen automations) som styr uppdateringen av laddningsfönsterna. När du gjort detta har du tre laddningsfönster som uppdateras när nya elpriser släpps och som ska användas för att ladda batteriet. Sensorernas namn hittar du i steg 4. 
 
-Steg 9: Skapa två template sensorer (se template.yaml) som beräknar energibehovet. Observera att koden är lång och att denna kod inte ska ha en egen trigger - en vanlig template sensor. Template sensorerna har nedanstående namn i filen template.yaml
+Steg 9: Skapa två template sensorer (se template.yaml) som beräknar energibehovet. Observera att koden är lång och att denna kod inte ska ha en egen trigger - en vanlig template sensor. Template sensorerna har nedanstående namn i filen template.yaml. För att sensorerna ska fungera krävs sensor.batteries_state_of_capacity som visar aktuell batterinivå (följer med Huawei integrationen). Finns inte denna behöver du justera koden eller din sensors namn. Du behöver även number.batteries_end_of_discharge_soc som visar lägsta urladdninvsnivå i %. Även den följer med Huawei integrationen. Finns inte denna behöver du justera koden eller din sensors namn.
 
+Steg 10: Skapa en input_number (via helper) för att addera kWh till energibehovet vilket skapar en möjlighet att trimma in logiken utifrån ditt energimönster. Ge sensorn följande namn: 
+- battery_buffer_kwh
 
+Steg 11: Skapa två automationer som kommer att styra om batteriet ska laddas eller inte. I mappen automations heter dessa 
+- 
 
 
 
