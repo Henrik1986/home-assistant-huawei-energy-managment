@@ -36,7 +36,7 @@ action:
         sequence:
           - action: huawei_solar.set_tou_periods
             data:
-              device_id: 3b9da000027a871e418238a41b828eaa
+              device_id: YOUR ID
               periods: 00:00-23:59/1234567/+
           - delay: 00:01:00
           - service: select.select_option
