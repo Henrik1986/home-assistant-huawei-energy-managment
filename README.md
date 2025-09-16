@@ -13,7 +13,7 @@ Laddbox (https://www.home-assistant.io/integrations/wallbox/)
 
 <img width="1812" height="814" alt="Skärmbild 2025-09-15 221922" src="https://github.com/user-attachments/assets/36321474-aa4d-4384-b6cf-5126dd4b973d" /> Bilden ovan är en skärmbild från min vy i Home Assistant där jag justera logiken. 
 
-Steg 1: Skapa en template (se template.yaml) som håller koll på husets aktuella effekt. Din I min setup valde jag att exkludera laddningen av elbilen  - ge den namnet: huseffekt_exl_elbil. Skapa därefter en sensor (se sensors.yaml) som ackumulerar kWh som du namnger energy_total_exl_elbil. 
+Steg 1: Skapa en template (se template.yaml) som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen  - ge den namnet: huseffekt_exl_elbil. Skapa därefter en sensor (se sensors.yaml) som ackumulerar kWh som du namnger energy_total_exl_elbil. 
 Min kod förutsätter att du har en smartmätare via Huawei intergrationen samt att du justerat dayily_yail enligt följande: https://github.com/wlcrs/huawei_solar/wiki/Daily-Solar-Yield#a-better-approach
 Annars får du anpassa koden (se template.yaml) utifrån din setup. 
 
