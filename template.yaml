@@ -821,7 +821,76 @@
                     {{ ns.kwh | round(2) }}
 
 
+--------------------------------------------------------------------------------------------------------
+- trigger:
+  - platform: time_pattern
+    minutes: "/30"
+  sensor: 
+      - name: "battery_supercheap_decision"
+        state: >
+          {%- set threshold = states('input_number.price_limit_supercheap') | float -%}
+          {%- set required_hours = states('input_number.hours_required_supercheap') | int -%}
+          {%- set solar_limit = states('input_number.solar_threshold_kwh') | float -%}
+          {%- set soc = states('sensor.batteries_state_of_capacity') | float(0) -%}
+          {%- set soc_limit = states('input_number.battery_soc_limit_supercheap') | float(80) -%}
 
+          {%- set prices_today = state_attr('sensor.YOUR_NORDPOOL_SENSOR', 'today') or [] -%}
+          {%- set prices_tomorrow = state_attr('sensor.YOUR_NORDPOOL_SENSOR', 'tomorrow') or [] -%}
+          {%- set tomorrow_valid = state_attr('sensor.YOUR_NORDPOOL_SENSOR', 'tomorrow_valid') -%}
+          {%- set prices = prices_today + (prices_tomorrow if tomorrow_valid else []) -%}
+
+          {%- set now_dt = now() -%}
+          {%- set start_of_today = now_dt.replace(hour=0, minute=0, second=0, microsecond=0) -%}
+
+          {%- set cheapest = namespace(start=None, avg=None, index=None) -%}
+          {%- set min_price = namespace(value=999, idx=None) -%}
+
+          {%- for i in range(0, (prices | length) - required_hours + 1) -%}
+                    {%- set window = prices[i:i+required_hours] -%}
+                    {%- set avg = (window | map('float') | sum) / (window | length) -%}
+                    {%- if avg < min_price.value -%}
+                              {%- set min_price.value = avg -%}
+                              {%- set min_price.idx = i -%}
+                    {%- endif -%}
+          {%- endfor -%}
+
+          {%- if min_price.idx is not none -%}
+                    {%- set cheapest.start = start_of_today + timedelta(hours=min_price.idx) -%}
+                    {%- set cheapest.avg = min_price.value -%}
+          {%- endif -%}
+
+          {%- if cheapest.start -%}
+                    {%- set forecast = state_attr('sensor.solar_forecast_west', 'west') -%}
+                    {%- set solar_kwh = 0 -%}
+                    {%- if forecast and 'watt_hours_period' in forecast -%}
+                              {%- set all_entries = forecast['watt_hours_period'] -%}
+                              {%- set interval_end_dt = cheapest.start + timedelta(hours=12) -%}
+                              {%- set filtered = all_entries
+                                        | selectattr('date', 'defined')
+                                        | selectattr('date', '>=', cheapest.start.isoformat())
+                                        | selectattr('date', '<=', interval_end_dt.isoformat())
+                                        | list -%}
+                              {%- set valid_entries = filtered
+                                        | selectattr('values', 'defined')
+                                        | selectattr('values', '>', 0)
+                                        | list -%}
+                              {%- if valid_entries | length > 0 -%}
+                                        {%- set solar_kwh = (valid_entries | map(attribute='values') | sum | default(0)) / 1000 * 0.9 -%}
+                              {%- endif -%}
+                    {%- endif -%}
+
+                    {%- if solar_kwh < solar_limit and soc < soc_limit and cheapest.avg < threshold -%}
+                              {{ cheapest.start.isoformat() }} - {{ (cheapest.start + timedelta(hours=required_hours)).isoformat() }}
+                              {# Debug:
+                              Pris valt: {{ cheapest.avg }}
+                              Solar_kwh: {{ solar_kwh }}
+                              #}
+                    {%- else -%}
+                              ""
+                    {%- endif -%}
+          {%- else -%}
+                    ""
+          {%- endif -%}
 
 ---------------------------------------------------------------------------------------------------------
 
