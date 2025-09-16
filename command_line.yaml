@@ -6,10 +6,9 @@
     json_attributes:
         - west
 
-
+  # ADJUST THE VALUE BELOW TO YOUR POSITIONS AND SOLAR SETUP
   # https://api.forecast.solar/estimate/:lat/:lon/:dec/:az/:kwp 
   
-  # :apikey - personal API key for registered users; string
   #:lat - latitude of location, -90 (south) … 90 (north); handeled with a precission of 0.0001 or abt. 10 m
   #:lon - longitude of location, -180 (west) … 180 (east); handeled with a precission of 0.0001 or abt. 10 m
   #:dec - plane declination, 0 (horizontal) … 90 (vertical) - always in relation to the earth's surface; integer
