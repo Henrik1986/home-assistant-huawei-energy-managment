@@ -2,7 +2,7 @@
       unique_id: huseffekt_exl_elbil
       unit_of_measurement: "kW"
       state: >
-        {% set net_power = states('sensor.power_meter_active_power') | float(0) %} #YOUR ACTIVE POWER METER
+        {% set net_power = states('sensor.power_meter_active_power') | float(0) %} #YOUR ACTIVE POWER METER EXPORT/IMPORT
         {% set import = -net_power if net_power < 0 else 0 %}
         {% set export = net_power if net_power > 0 else 0 %}
         {% set elbil = states('sensor.ADD_YOUR_WALLBOX') | float(0) %}  #YOUR WALLBOX IN kW
