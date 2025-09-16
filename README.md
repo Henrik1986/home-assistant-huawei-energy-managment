@@ -64,5 +64,6 @@ Steg 12: Skapa en input_boolean (via helper) som avaktiverar samtliga automation
 
 
 
+
 <img width="1465" height="285" alt="Skärmbild 2025-09-16 153500" src="https://github.com/user-attachments/assets/bfd140df-c7a1-418f-9390-0c5bff5e6151" />
-Med en apex-chart kan du på ett visuellt tydligt sätt synliggöra laddningsfönster, prognos för solel och elpriser. Exmpelkod finns under Apex-chart. 
+Med en apex-chart kan du på ett visuellt tydligt sätt synliggöra laddningsfönster, prognos för solel och elpriser. Exmpelkod finns under i mappen apex-chart. Du behöver justera koden utifrån dina sensorer, men har du följt ovanstående instruktioner är det bara din nordpool-sensor som ska läggas in. 
