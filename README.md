@@ -15,7 +15,7 @@ Laddbox (https://www.home-assistant.io/integrations/wallbox/)
 
 Steg 1: Skapa en template (se template.yaml) som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen  - ge den namnet: huseffekt_exl_elbil. Skapa därefter en sensor (se sensors.yaml) som ackumulerar kWh som du namnger energy_total_exl_elbil. 
 Min kod förutsätter att du har en smartmätare via Huawei intergrationen samt att du justerat dayily_yail enligt följande: https://github.com/wlcrs/huawei_solar/wiki/Daily-Solar-Yield#a-better-approach
-Annars får du anpassa koden (se template.yaml) utifrån din setup. 
+Om din setup ser ut på annat sätt kan du utgå från koden (se template.yaml) för att skapa en sensor som håller koll på husets aktuella effekt. 
 
 Steg 2: Skapa SQL-sensorer (se sql-sensor) för att följa din energiförbrukning. Du skapar SQL-sensorer via integrationer. (https://www.home-assistant.io/integrations/sql/)
 Ange följande + frågan som finns i filerna i mappen sql-sensor
