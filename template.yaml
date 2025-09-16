@@ -452,7 +452,7 @@
                 {% endif %}
                 {{ ns.kwh | round(2) }}
 
-
+--------------------------------------------------------------------------------------------------------
 
 
     - name: "battery_charge_energy_2_1b"
@@ -679,17 +679,6 @@
                     {% set current_kwh = usable_capacity * ((soc_clamped - min_soc) / denom) %}
                     {{ current_kwh | round(2) }}
                 {% endif %}
-
-#          usable_capacity: >
-#                {# Total användbar kapacitet (kWh) givet min SoC #}
-#                {% set capacity = states('input_number.battery_total_capacity_kwh') | float(0) %}
-#                {% set min_soc = states('number.batteries_end_of_discharge_soc') | float(0) %}
-#                {% set denom = (100 - min_soc) %}
-#                {% if denom <= 0 %}
-#                    {{ 0.0 }}
-#                {% else %}
-#                    {{ (capacity * ((100 - min_soc) / 100)) | round(2) }}
-#                {% endif %}
           
           buffer: >
                 {% set buffer = states('input_number.battery_buffer_kwh') | float(0) %}
@@ -837,8 +826,6 @@
 ---------------------------------------------------------------------------------------------------------
 
 
-# TAR FRAM ETT LADDNINGSINTERVALL DIREKT EFTER ATT ELPRISERNA BLEV TILLGÄNGLIGA
-# SÖKER MELLAN 14-16 DÅ ELPRISER BRUKAR VARA TILLGÄNGLIGA VID 14
 - trigger:
   - trigger: state
     entity_id: input_button.update_battery_cheapest_charge
@@ -873,9 +860,8 @@
             unavailable
           {%- endif %}
 
+--------------------------------------------------------------------------------------------------------
 
-# TAR FRAM ETT LADDNINGSINTERVALL DIREKT EFTER ATT ELPRISERNA BLEV TILLGÄNGLIGA
-# SÖKER MELLAN 11-14 IMORGON. SENSORN ANVÄNDS FÖR ATT SKAPA EN BERÄKNINGSPUNKT FÖR ATT ESTIMERA LADDNING2
 - trigger:
   - trigger: state
     entity_id: input_button.update_battery_cheapest_charge
@@ -914,8 +900,7 @@
                     Inget lämpligt intervall hittades.
           {%- endif %}
 
-# TAR FRAM ETT LADDNINGSINTERVALL DIREKT EFTER ATT ELPRISERNA BLEV TILLGÄNGLIGA
-# SÖKER MELLAN 23 IDAG TILL 05 IMOROGN
+--------------------------------------------------------------------------------------------------------
 - trigger:
   - trigger: state
     entity_id: input_button.update_battery_cheapest_charge
