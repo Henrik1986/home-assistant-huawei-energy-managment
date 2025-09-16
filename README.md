@@ -27,7 +27,7 @@ Observera att du behöver ersätta sensor.energy_total_exl_elbil om du valde nå
 Steg 3: Skapa en command line sensor (se command_line.yaml) för solelsprognos (data hämtas från https://forecast.solar/)
 Observer att du behöver ersätta sensor.solar_forecast_west i resten av koden om du väljer något annat namn. Mitt råd är att använda ett annat friendly name om du önskar ett annat namn. Det kommer inte påverka kommande kod. 
 
-Steg 4: Skapa tre template sensorer (se template.yaml) som söker upp billiga laddningsfönster (observera att template sensorerna ska ha en egen trigger). Logiken bakom laddningsfönsterna kommer du kunna styra vi UI. Du behöver även lägga in din Nordpool sensor i template koden (min är i SEK/kWh). Template sensorerna heter följande i filen template.yaml.
+Steg 4: Skapa tre template sensorer (se template.yaml) som söker upp billiga laddningsfönster (observera att template sensorerna ska ha en egen trigger). Logiken bakom laddningsfönsterna kommer du kunna styra vi UI. Du behöver även lägga in din Nordpool sensor i template koden (min är i SEK/kWh). Template sensorerna har nedanstående namn i filen template.yaml.
 - battery_charge_window_cheapest_1a
 - battery_charge_window_cheapest_1b
 - battery_charge_window_cheapest_2
