@@ -5,7 +5,7 @@
         {% set net_power = states('sensor.power_meter_active_power') | float(0) %} #YOUR ACTIVE POWER METER EXPORT/IMPORT
         {% set import = -net_power if net_power < 0 else 0 %}
         {% set export = net_power if net_power > 0 else 0 %}
-        {% set elbil = states('sensor.ADD_YOUR_WALLBOX') | float(0) %}  #YOUR WALLBOX IN kW
+        {% set elbil = states('sensor.ADD_YOUR_WALLBOX') | float(0) %}  #YOUR WALLBOX POWER IN kW
         {% set batt = states('sensor.batteries_charge_discharge_power') | float(0) %} #YOUR BATTERY DISCHARGE POWER
         {% set solar = states('sensor.input_power_with_efficiency_loss_kw') | float(0) %} #YOUR SOLAR POWER
 
