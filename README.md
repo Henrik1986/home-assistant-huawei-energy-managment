@@ -59,6 +59,11 @@ Steg 11: Skapa två automationer som kommer att styra om batteriet ska laddas el
 Automationerna är byggda utifrån Huawei integrationen och utifrån batteriet Luna2000 - S1. Om du har en annan setup får du justera automationerna utifrån den. Har du samma setup behöver du bara lägga till ditt device_id. 
 Detta hittar du under utvecklarverktyg -> åtgärder -> klicka på åtgärd -> skriv huawei -> välj forcible charge -> klicka på gå till UI-läge -> Välj Batteries i rullgardinen på raden battery -> Klicka på gå till YAML-läge - Då ska du få fram till device_id
 
+Steg 12: Skapa en input_boolean (via helper) som avaktiverar samtliga automationer för att kunna ladda nu. Namge ge den med följande namn: 
+- manual_charge
+
+
+
 
 
 Med en apex-chart kan du på ett visuellt tydligt sätt synliggöra laddningsfönster, prognos för solel och elpriser. Exmpelkod finns under Apex-chart. 
