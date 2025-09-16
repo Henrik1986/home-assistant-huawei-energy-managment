@@ -50,7 +50,7 @@ Steg 9: Skapa två template sensorer (se template.yaml) som beräknar energibeho
 För att sensorerna ska fungera krävs sensor.batteries_state_of_capacity som visar aktuell batterinivå (finns i Huawei integrationen). Finns inte denna behöver du justera koden eller din sensors namn. Du behöver även number.batteries_end_of_discharge_soc som visar lägsta urladdninvsnivå i %. Även den följer med Huawei integrationen. Finns inte denna behöver du justera koden eller din sensors namn.
 
 Steg 10: Skapa en input_number (via helper) för att addera kWh till energibehovet vilket skapar en möjlighet att trimma in logiken utifrån ditt energibehov. Ge sensorn följande namn: 
-- battery_buffer_kwy
+- battery_buffer_kwh
 
 Steg 11: Skapa två automationer som kommer att styra om batteriet ska laddas eller inte. I mappen automations heter dessa 
 - battery_luna_2000_S1_interval_1a_2.yaml
