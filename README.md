@@ -25,17 +25,20 @@ Steg 3: Skapa en command line sensor för solelsprognos (https://forecast.solar/
 Observer att du behöver ersätta sensor.solar_forecast_west i resten av koden om du väljer något annat namn.
 
 Steg 4: Skapa template sensorer som söker upp laddningsfönster (observera att template sensorerna ska ha en trigger). Logiken bakom laddningsfönsterna går att styra vi UI. 
-Skapa en input_number 
+Skapa två input_number via helper. Ge dem följande namn
 - battery_charge_duration_hours
+- battery_total_capacity_kwh
 
 Du behöver även lägga in din Nordpool sensor i template koden (min är i SEK/kWh). 
 
-Steg 5: Skapa en input_button för uppdateringen av laddningsfönster. 
+Steg 5: Skapa en input_button för uppdateringen av laddningsfönster dela manuellt, men även för den automatiska sökningen. 
 - update_battery_cheapest_charge
 
-Steg 6: Skapa en template som håller koll på om nya elpriser finns tillgängliga. Observera att denna ska ligga som en binary_sensor. Ersätt med din Nordpool-sensor.
+Steg 6: Skapa en template som håller koll på om nya elpriser finns tillgängliga. Observera att denna ska ligga som en binary_sensor under template. Lägg in din Nordpool-sensor i koden. 
 
-Steg 7: Skapa en automation (battery_update_charge_interval) som styr uppdateringen av laddningsfönsterna. Nu har du tre laddningsfönster som uppdateras när nya elpriser släpps och som ska användas för att ladda batteriet
+Steg 7: Skapa en automation (battery_update_charge_interval.yaml) som styr uppdateringen av laddningsfönsterna. När du gjort detta har du tre laddningsfönster som uppdateras när nya elpriser släpps och som ska användas för att ladda batteriet
 - battery_charge_window_cheapest_1a
 - battery_charge_window_cheapest_1b
 - battery_charge_window_cheapest_2
+
+Med en apex-chart kan du på ett visuellt tydligt sätt synliggöra laddningsfönster, prognos för solel och elpriser. Exmpelkod finns under Apex-chart. 
