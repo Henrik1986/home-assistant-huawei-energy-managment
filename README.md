@@ -63,9 +63,13 @@ Steg 12: Skapa en input_boolean (via helper) som avaktiverar samtliga automation
 - manual_charge
 
 Steg 13: Skapa en templete sensor (se template.yaml) som söker upp ett superbilligt laddningsfönster om solprognosen är låg och batteriet är dåligt laddat. Syftet med detta intervall är att inte vissa ett superbilligt elpris och då solelen inte räcker till och batterinivån är låg. Template sensorn har nedanstående namn och finns i filen template.yaml
+-  battery_supercheap_decision
 
-
-
+Steg 14: Skapa följande input_number för att kunna justera kraven för det superbilliga intervallet
+- price_limit_supercheap
+- hours_required_supercheap
+- solar_threshold_kwh
+- battery_soc_limit_supercheap         
 
 <img width="1465" height="285" alt="Skärmbild 2025-09-16 153500" src="https://github.com/user-attachments/assets/bfd140df-c7a1-418f-9390-0c5bff5e6151" />
 Med en apex-chart kan du på ett visuellt tydligt sätt synliggöra laddningsfönster, prognos för solel och elpriser. Exmpelkod finns under i mappen apex-chart. Du behöver justera koden utifrån dina sensorer, men har du följt ovanstående instruktioner är det bara din nordpool-sensor som ska läggas in. 
