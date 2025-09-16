@@ -43,4 +43,10 @@ Steg 7: Skapa en template sensor (se template.yaml) som håller koll på om nya 
 
 Steg 8: Skapa en automation (battery_update_charge_interval.yaml i mappen automations) som styr uppdateringen av laddningsfönsterna. När du gjort detta har du tre laddningsfönster som uppdateras när nya elpriser släpps och som ska användas för att ladda batteriet. Sensorernas namn hittar du i steg 4. 
 
+Steg 9: Skapa två template sensorer (se template.yaml) som beräknar energibehovet. Observera att koden är lång och att denna kod inte ska ha en egen trigger - en vanlig template sensor. Template sensorerna har nedanstående namn i filen template.yaml
+
+
+
+
+
 Med en apex-chart kan du på ett visuellt tydligt sätt synliggöra laddningsfönster, prognos för solel och elpriser. Exmpelkod finns under Apex-chart. 
