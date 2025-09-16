@@ -18,6 +18,818 @@
 
         {{ [huseffekt, 0] | max | round(2) }}
 
+--------------------------------------------------------------------------------------------------------
+    - name: "battery_charge_energy_1a_2"
+      unique_id: battery_charge_energy_1a_2
+      unit_of_measurement: "kWh"
+      state: >
+           {% set raw_start = states('sensor.battery_charge_window_cheapest_1a') %}
+           {% set raw_end = states('sensor.battery_charge_window_cheapest_2') %}
+
+           {% if ' - ' in raw_start and ' - ' in raw_end %}
+                    {% set t1 = raw_start.split(' - ')[0] %}  {# Starttid #}
+                    {% set t2 = raw_end.split(' - ')[0] %}    {# Sluttid #}
+                    {% set start = as_datetime(t1) %}
+                    {% set end = as_datetime(t2) %}
+           {% else %}
+                    {% set start = as_datetime('1970-01-01T00:00:00+00:00') %}
+                    {% set end = as_datetime('1970-01-01T01:00:00+00:00') %}
+           {% endif %}
+
+
+            {% set sensors = {
+                'morning': (5, 10, states('sensor.energy_avg_morning') | float(0)),
+                'day': (10, 15, states('sensor.energy_avg_day') | float(0)),
+                'evening': (15, 21, states('sensor.energy_avg_evening') | float(0)),
+                'night_evening': (22, 0, states('sensor.energy_avg_night') | float(0)),
+                'night_morning': (0, 5, states('sensor.energy_avg_night') | float(0))
+            } %}
+
+            {% set ns = namespace(total_kwh=0, debug={}) %}
+            {% for block, (h_start, h_end, effect) in sensors.items() %}
+                {% set block_start = start.replace(hour=h_start % 24, minute=0, second=0, microsecond=0) %}
+                {% set block_end = start.replace(hour=h_end % 24, minute=0, second=0, microsecond=0) %}
+                {% if h_start >= h_end and block_end <= block_start %}
+                    {% set block_end = block_end + timedelta(days=1) %}
+                {% endif %}
+                {% set overlap_start = [start, block_start] | max %}
+                {% set overlap_end = [end, block_end] | min %}
+                {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+                {% if delta > 0 %}
+                    {% set ns.total_kwh = ns.total_kwh + delta * effect %}
+                    {% set ns.debug = dict(ns.debug, **{block: {'delta': delta, 'effect': effect, 'energy': delta * effect}}) %}
+                {% endif %}
+            {% endfor %}
+
+            {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+            {% set solar_kwh = 0 %}
+            {% set solar_interval_start = none %}
+            {% set solar_interval_end = none %}
+
+            {% if forecast and 'watt_hours_period' in forecast %}
+                {% set start_ts = as_timestamp(start) %}
+                {% set end_ts = as_timestamp(end) %}
+                {% set today_date = start.date() %}
+                {% set entries = forecast['watt_hours_period']
+                    | selectattr('date', 'defined')
+                    | selectattr('date', '>=', start_ts | timestamp_local)
+                    | selectattr('date', '<=', end_ts | timestamp_local)
+                    | selectattr('date', 'match', '^' ~ today_date|string)
+                    | list %}
+                {% set valid_entries = entries
+                    | selectattr('values', 'defined')
+                    | selectattr('values', '>', 0)
+                    | list %}
+
+                {% if valid_entries | length > 0 %}
+                    {% set solar_interval_start = (valid_entries[0].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                    {% set solar_interval_end = (valid_entries[-1].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                    {% set solar_kwh = (valid_entries | map(attribute='values') | sum | default(0)) / 1000 * 0.9 %}
+                {% endif %}
+            {% endif %}
+
+            {% set ns_solar = namespace(kwh=0, debug={}) %}
+            {% if solar_interval_start and solar_interval_end %}
+                {% set s_start = solar_interval_start %}
+                {% set s_end = solar_interval_end %}
+                {% for block, (h_start, h_end, effect) in sensors.items() %}
+                    {% set block_start = s_start.replace(hour=h_start % 24, minute=0, second=0, microsecond=0) %}
+                    {% set block_end = s_start.replace(hour=h_end % 24, minute=0, second=0, microsecond=0) %}
+                    {% if h_start >= h_end and block_end <= block_start %}
+                        {% set block_end = block_end + timedelta(days=1) %}
+                    {% endif %}
+                    {% set overlap_start = [s_start, block_start] | max %}
+                    {% set overlap_end = [s_end, block_end] | min %}
+                    {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+                    {% if delta > 0 %}
+                        {% set ns_solar.kwh = ns_solar.kwh + delta * effect %}
+                        {% set ns_solar.debug = dict(ns_solar.debug, **{block: {'delta': delta, 'effect': effect, 'energy': delta * effect}}) %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            {% set ns_no_solar = namespace(kwh=0, debug={}) %}
+            {% if solar_interval_start and solar_interval_end %}
+                {% set no_solar_start = solar_interval_end %}
+                {% set no_solar_end = end %}
+
+                {% for block, (h_start, h_end, effect) in sensors.items() %}
+                    {% set block_start = no_solar_start.replace(hour=h_start, minute=0, second=0, microsecond=0) %}
+                    {% set block_end = no_solar_start.replace(hour=h_end, minute=0, second=0, microsecond=0) %}
+
+                    {% if h_start >= h_end %}
+                        {% set block_end = block_end + timedelta(days=1) %}
+                    {% endif %}
+
+                    {% if block_start < no_solar_start %}
+                        {% set block_start = block_start + timedelta(days=1) %}
+                    {% endif %}
+
+                    {% if block_end < no_solar_start %}
+                        {% set block_end = block_end + timedelta(days=1) %}
+                    {% endif %}
+
+                    {% set overlap_start = [no_solar_start, block_start] | max %}
+                    {% set overlap_end = [no_solar_end, block_end] | min %}
+                    {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+
+                    {% if delta > 0 %}
+                        {% set ns_no_solar.kwh = ns_no_solar.kwh + delta * effect %}
+                        {% set ns_no_solar.debug = dict(ns_no_solar.debug, **{block: {'delta': delta, 'effect': effect, 'energy': delta * effect}}) %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            {# --- Justerad beräkning med min SoC --- #}
+            {% set battery_capacity = states('input_number.battery_total_capacity_kwh') | float(0) %}
+            {% set battery_soc_percent = states('sensor.batteries_state_of_capacity') | float(0) %}
+            {% set min_soc = states('number.batteries_end_of_discharge_soc') | float(0) %}
+
+            {% set safe_den = (100 - min_soc) %}
+            {% if safe_den <= 0 %}
+                {% set usable_capacity = 0 %}
+                {% set battery_charge_kwh = 0 %}
+            {% else %}
+                {% set usable_capacity = battery_capacity * ((100 - min_soc) / 100) %}
+                {% set soc_clamped = battery_soc_percent %}
+                {% if soc_clamped < min_soc %}
+                    {% set soc_clamped = min_soc %}
+                {% endif %}
+                {% if soc_clamped > 100 %}
+                    {% set soc_clamped = 100 %}
+                {% endif %}
+                {% set battery_charge_kwh = usable_capacity * ((soc_clamped - min_soc) / safe_den) %}
+            {% endif %}
+
+            {% set buffer = states('input_number.battery_buffer_kwh') | float(0) %}
+
+            {% set solar_diff = [ns_solar.kwh - solar_kwh, 0] | max %}
+            {% set raw_total = ns_no_solar.kwh + solar_diff - battery_charge_kwh + buffer %}
+            {% set total_energy_need = [raw_total, 0] | max %}
+
+            {{ total_energy_need | round(2) }}
+
+      attributes:
+            search_interval: >
+                {% set raw_start = states('sensor.battery_charge_window_cheapest_1a') %}
+                {% set raw_end = states('sensor.battery_charge_window_cheapest_2') %}
+                {% if ' - ' in raw_start and ' - ' in raw_end %}
+                    {% set t1 = raw_start.split(' - ')[0] %}
+                    {% set t2 = raw_end.split(' - ')[0] %}
+                    {% set start = as_datetime(t1) %}
+                    {% set end = as_datetime(t2) %}
+                {% else %}
+                    {% set start = as_datetime('1970-01-01T00:00:00+00:00') %}
+                    {% set end = as_datetime('1970-01-01T01:00:00+00:00') %}
+                {% endif %}
+                {{ start.isoformat() }} - {{ end.isoformat() }}
+
+            sun_interval: >
+              {% set raw_start = states('sensor.battery_charge_window_cheapest_1a') %}
+              {% set raw_end = states('sensor.battery_charge_window_cheapest_2') %}
+
+              {% if ' - ' in raw_start and ' - ' in raw_end %}
+              {% set t1 = raw_start.split(' - ')[0] %}
+              {% set t2 = raw_end.split(' - ')[0] %}
+              {% set start = as_datetime(t1) %}
+              {% set end = as_datetime(t2) %}
+              {% else %}
+              {% set start = as_datetime('1970-01-01T00:00:00+00:00') %}
+              {% set end = as_datetime('1970-01-01T01:00:00+00:00') %}
+              {% endif %}
+
+              {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+              {% set solar_interval_start = none %}
+              {% set solar_interval_end = none %}
+
+              {% if forecast and 'watt_hours_period' in forecast %}
+              {% set start_ts = as_timestamp(start) %}
+              {% set end_ts = as_timestamp(end) %}
+              {% set today_date = start.date() %}
+              {% set entries = forecast['watt_hours_period']
+                 | selectattr('date', 'defined')
+                 | selectattr('date', '>=', start_ts | timestamp_local)
+                 | selectattr('date', '<=', end_ts | timestamp_local)
+                 | selectattr('date', 'match', '^' ~ today_date|string)
+                 | list %}
+              {% set valid_entries = entries
+                 | selectattr('values', 'defined')
+                 | selectattr('values', '>', 0)
+                 | list %}
+
+              {% if valid_entries | length > 0 %}
+                {% set solar_interval_start = (valid_entries[0].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                {% set solar_interval_end = (valid_entries[-1].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+              {% endif %}
+              {% endif %}
+
+              {% if solar_interval_start and solar_interval_end %}
+              {{ solar_interval_start.isoformat() }} - {{ solar_interval_end.isoformat() }}
+              {% else %}
+              {{ '1970-01-01T00:00:00+00:00 - 1970-01-01T00:00:00+00:00' }}
+              {% endif %}
+                
+            no_sun_interval: >
+                {% set raw_end = states('sensor.battery_charge_window_cheapest_2') %}
+                {% set raw_start = states('sensor.battery_charge_window_cheapest_1a') %}
+                {% if ' - ' in raw_start and ' - ' in raw_end %}
+                    {% set t1 = raw_start.split(' - ')[0] %}
+                    {% set t2 = raw_end.split(' - ')[0] %}
+                    {% set start = as_datetime(t1) %}
+                    {% set end = as_datetime(t2) %}
+                {% else %}
+                    {% set start = as_datetime('1970-01-01T00:00:00+00:00') %}
+                    {% set end = as_datetime('1970-01-01T01:00:00+00:00') %}
+                {% endif %}
+                {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+                {% set solar_interval_end = none %}
+                {% if forecast and 'watt_hours_period' in forecast %}
+                    {% set start_ts = as_timestamp(start) %}
+                    {% set end_ts = as_timestamp(end) %}
+                    {% set today_date = start.date() %}
+                    {% set entries = forecast['watt_hours_period']
+                       | selectattr('date', 'defined')
+                       | selectattr('date', '>=', start_ts | timestamp_local)
+                       | selectattr('date', '<=', end_ts | timestamp_local)
+                       | selectattr('date', 'match', '^' ~ today_date|string)
+                       | list %}
+                    {% set valid_entries = entries
+                       | selectattr('values', 'defined')
+                       | selectattr('values', '>', 0)
+                       | list %}
+                    {% if valid_entries | length > 0 %}
+                        {% set solar_interval_end = (valid_entries[-1].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                    {% endif %}
+                {% endif %}
+                {% if solar_interval_end %}
+                    {{ solar_interval_end.isoformat() }} - {{ end.isoformat() }}
+                {% else %}
+                    1970-01-01T00:00:00+00:00 - 1970-01-01T00:00:00+00:00
+                {% endif %}
+
+            battery_capacity: >
+                {# Visar aktuell laddning i kWh *ovanför* min SoC (dvs det som faktiskt är användbart) #}
+                {% set capacity = states('input_number.battery_total_capacity_kwh') | float(0) %}
+                {% set soc = states('sensor.batteries_state_of_capacity') | float(0) %}
+                {% set min_soc = states('number.batteries_end_of_discharge_soc') | float(0) %}
+                {% set denom = (100 - min_soc) %}
+                {% if denom <= 0 %}
+                    {{ 0.0 }}
+                {% else %}
+                    {% set usable_capacity = capacity * ((100 - min_soc) / 100) %}
+                    {% set soc_clamped = soc %}
+                    {% if soc_clamped < min_soc %}
+                        {% set soc_clamped = min_soc %}
+                    {% endif %}
+                    {% if soc_clamped > 100 %}
+                        {% set soc_clamped = 100 %}
+                    {% endif %}
+                    {% set current_kwh = usable_capacity * ((soc_clamped - min_soc) / denom) %}
+                    {{ current_kwh | round(2) }}
+                {% endif %}
+
+            buffer: >
+                {% set buffer = states('input_number.battery_buffer_kwh') | float(0) %}
+                {{ buffer | round(2) }}
+
+            estimated_solar_energy: >
+                {% set raw_start = states('sensor.battery_charge_window_cheapest_1a') %}
+                {% set raw_end = states('sensor.battery_charge_window_cheapest_2') %}
+                {% if ' - ' in raw_start and ' - ' in raw_end %}
+                    {% set t1 = raw_start.split(' - ')[0] %}
+                    {% set t2 = raw_end.split(' - ')[1] %}
+                    {% set start = as_datetime(t1) %}
+                    {% set end = as_datetime(t2) %}
+                {% else %}
+                    {% set start = as_datetime('1970-01-01T00:00:00+00:00') %}
+                    {% set end = as_datetime('1970-01-01T01:00:00+00:00') %}
+                {% endif %}
+                {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+                {% set solar_kwh = 0 %}
+                {% if forecast and 'watt_hours_period' in forecast %}
+                    {% set start_ts = as_timestamp(start) %}
+                    {% set end_ts = as_timestamp(end) %}
+                    {% set today_date = start.date() %}
+                    {% set entries = forecast['watt_hours_period']
+                        | selectattr('date', 'defined')
+                        | selectattr('date', '>=', start_ts | timestamp_local)
+                        | selectattr('date', '<=', end_ts | timestamp_local)
+                        | selectattr('date', 'match', '^' ~ today_date|string)
+                        | list %}
+                    {% set valid_entries = entries
+                        | selectattr('values', 'defined')
+                        | selectattr('values', '>', 0)
+                        | list %}
+                    {% if valid_entries | length > 0 %}
+                        {% set solar_kwh = (valid_entries | map(attribute='values') | sum | default(0)) / 1000 * 0.9 %}
+                    {% endif %}
+                {% endif %}
+                {{ solar_kwh | round(2) }}
+
+            estimated_energy_sun_interval: >
+                {% set raw_start = states('sensor.battery_charge_window_cheapest_1a') %}
+                {% set raw_end = states('sensor.battery_charge_window_cheapest_2') %}
+                {% if ' - ' in raw_start and ' - ' in raw_end %}
+                    {% set t1 = raw_start.split(' - ')[0] %}
+                    {% set t2 = raw_end.split(' - ')[0] %}
+                    {% set start = as_datetime(t1) %}
+                    {% set end = as_datetime(t2) %}
+                {% else %}
+                    {% set start = as_datetime('1970-01-01T00:00:00+00:00') %}
+                    {% set end = as_datetime('1970-01-01T01:00:00+00:00') %}
+                {% endif %}
+                {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+                {% set solar_interval_start = none %}
+                {% set solar_interval_end = none %}
+                {% if forecast and 'watt_hours_period' in forecast %}
+                    {% set start_ts = as_timestamp(start) %}
+                    {% set end_ts = as_timestamp(end) %}
+                    {% set today_date = start.date() %}
+                    {% set entries = forecast['watt_hours_period']
+                        | selectattr('date', 'defined')
+                        | selectattr('date', '>=', start_ts | timestamp_local)
+                        | selectattr('date', '<=', end_ts | timestamp_local)
+                        | selectattr('date', 'match', '^' ~ today_date|string)
+                        | list %}
+                    {% set valid_entries = entries
+                        | selectattr('values', 'defined')
+                        | selectattr('values', '>', 0)
+                        | list %}
+                    {% if valid_entries | length > 0 %}
+                        {% set solar_interval_start = (valid_entries[0].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                        {% set solar_interval_end = (valid_entries[-1].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                    {% endif %}
+                {% endif %}
+                {% set s_start = solar_interval_start %}
+                {% set s_end = solar_interval_end %}
+                {% set sensors = {
+                    'morning': (5, 10, states('sensor.energy_avg_morning') | float(0)),
+                    'day': (10, 15, states('sensor.energy_avg_day') | float(0)),
+                    'evening': (15, 21, states('sensor.energy_avg_evening') | float(0)),
+                    'night_evening': (22, 0, states('sensor.energy_avg_night') | float(0)),
+                    'night_morning': (0, 5, states('sensor.energy_avg_night') | float(0))
+                } %}
+                {% set ns = namespace(kwh=0) %}
+                {% if s_start and s_end %}
+                    {% for block, (h_start, h_end, effect) in sensors.items() %}
+                        {% set block_start = s_start.replace(hour=h_start % 24, minute=0, second=0, microsecond=0) %}
+                        {% set block_end = s_start.replace(hour=h_end % 24, minute=0, second=0, microsecond=0) %}
+                        {% if h_start >= h_end and block_end <= block_start %}
+                            {% set block_end = block_end + timedelta(days=1) %}
+                        {% endif %}
+                        {% set overlap_start = [s_start, block_start] | max %}
+                        {% set overlap_end = [s_end, block_end] | min %}
+                        {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+                        {% if delta > 0 %}
+                            {% set ns.kwh = ns.kwh + delta * effect %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                {{ ns.kwh | round(2) }}
+
+            estimated_energy_no_sun_interval: >
+                {% set raw_start = states('sensor.battery_charge_window_cheapest_1a') %}
+                {% set raw_end = states('sensor.battery_charge_window_cheapest_2') %}
+                {% if ' - ' in raw_start and ' - ' in raw_end %}
+                    {% set t1 = raw_start.split(' - ')[0] %}
+                    {% set t2 = raw_end.split(' - ')[0] %}
+                    {% set start = as_datetime(t1) %}
+                    {% set end = as_datetime(t2) %}
+                {% else %}
+                    {% set start = as_datetime('1970-01-01T00:00:00+00:00') %}
+                    {% set end = as_datetime('1970-01-01T01:00:00+00:00') %}
+                {% endif %}
+                {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+                {% set solar_interval_end = none %}
+                {% if forecast and 'watt_hours_period' in forecast %}
+                    {% set start_ts = as_timestamp(start) %}
+                    {% set end_ts = as_timestamp(end) %}
+                    {% set today_date = start.date() %}
+                    {% set entries = forecast['watt_hours_period']
+                        | selectattr('date', 'defined')
+                        | selectattr('date', '>=', start_ts | timestamp_local)
+                        | selectattr('date', '<=', end_ts | timestamp_local)
+                        | selectattr('date', 'match', '^' ~ today_date|string)
+                        | list %}
+                    {% set valid_entries = entries
+                        | selectattr('values', 'defined')
+                        | selectattr('values', '>', 0)
+                        | list %}
+                    {% if valid_entries | length > 0 %}
+                        {% set solar_interval_end = (valid_entries[-1].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                    {% endif %}
+                {% endif %}
+                {% set s_start = solar_interval_end %}
+                {% set s_end = end %}
+                {% set sensors = {
+                    'morning': (5, 10, states('sensor.energy_avg_morning') | float(0)),
+                    'day': (10, 15, states('sensor.energy_avg_day') | float(0)),
+                    'evening': (15, 21, states('sensor.energy_avg_evening') | float(0)),
+                    'night_evening': (22, 0, states('sensor.energy_avg_night') | float(0)),
+                    'night_morning': (0, 5, states('sensor.energy_avg_night') | float(0))
+                } %}
+                {% set ns = namespace(kwh=0) %}
+                {% if s_start and s_end %}
+                    {% for block, (h_start, h_end, effect) in sensors.items() %}
+                        {% set block_start = s_start.replace(hour=h_start % 24, minute=0, second=0, microsecond=0) %}
+                        {% set block_end = s_start.replace(hour=h_end % 24, minute=0, second=0, microsecond=0) %}
+                        {% if h_start >= h_end and block_end <= block_start %}
+                            {% set block_end = block_end + timedelta(days=1) %}
+                        {% endif %}
+                        {% if block_start < s_start %}
+                            {% set block_start = block_start + timedelta(days=1) %}
+                        {% endif %}
+                        {% if block_end < s_start %}
+                            {% set block_end = block_end + timedelta(days=1) %}
+                        {% endif %}
+                        {% set overlap_start = [s_start, block_start] | max %}
+                        {% set overlap_end = [s_end, block_end] | min %}
+                        {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+                        {% if delta > 0 %}
+                            {% set ns.kwh = ns.kwh + delta * effect %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                {{ ns.kwh | round(2) }}
+
+
+
+
+    - name: "battery_charge_energy_2_1b"
+      unique_id: battery_charge_energy_2_1b
+      unit_of_measurement: "kWh"
+      state: >
+          {% set t1 = states('sensor.battery_charge_window_cheapest_2').split(' - ')[0] %}
+          {% set t2 = states('sensor.battery_charge_window_cheapest_1b').split(' - ')[0] %}
+          {% set start = as_datetime(t1) %}
+          {% set end = as_datetime(t2) %}
+          {% set original_start = start %}
+
+          {% set sensors = {
+            'morning': (5, 10, states('sensor.energy_avg_morning') | float(0)),
+            'day': (10, 15, states('sensor.energy_avg_day') | float(0)),
+            'evening': (15, 22, states('sensor.energy_avg_evening') | float(0)),
+            'night_evening': (22, 24, states('sensor.energy_avg_night') | float(0)),
+            'night_morning': (0, 5, states('sensor.energy_avg_night') | float(0))
+          } %}
+
+          {% set ns = namespace(total_kwh=0) %}
+
+          {% for block, (h_start, h_end, effect) in sensors.items() %}
+            {% set block_start = start.replace(hour=h_start % 24, minute=0, second=0, microsecond=0) %}
+            {% set block_end = start.replace(hour=h_end % 24, minute=0, second=0, microsecond=0) %}
+            {% if h_start >= h_end and block_start <= block_end %}
+              {% set block_end = block_end + timedelta(days=1) %}
+            {% endif %}
+            {% set overlap_start = [start, block_start] | max %}
+            {% set overlap_end = [end, block_end] | min %}
+            {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+            {% if delta > 0 %}
+              {% set ns.total_kwh = ns.total_kwh + delta * effect %}
+            {% endif %}
+          {% endfor %}
+
+          {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+          {% set solar_kwh = 0 %}
+          {% set solar_interval_start = none %}
+          {% set solar_interval_end = none %}
+
+          {% if forecast and 'watt_hours_period' in forecast %}
+            {% set start_ts = as_timestamp(start) %}
+            {% set end_ts = as_timestamp(end) %}
+            {% set entries = forecast['watt_hours_period']
+              | selectattr('date', 'defined')
+              | selectattr('date', '>=', start_ts | timestamp_local)
+              | selectattr('date', '<=', end_ts | timestamp_local)
+              | list %}
+
+            {% set valid_entries = entries
+              | selectattr('values', 'defined')
+              | selectattr('values', '>', 0)
+              | list %}
+
+            {% if valid_entries | length > 0 %}
+              {% set solar_interval_start = (valid_entries[0].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+              {% set solar_interval_end = (valid_entries[-1].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+              {% set solar_kwh = (valid_entries | map(attribute='values') | sum | default(0)) / 1000 * 0.9 %}
+            {% endif %}
+          {% endif %}
+
+          {% set ns_solar = namespace(kwh=0) %}
+          {% if solar_interval_start and solar_interval_end %}
+            {% set s_start = solar_interval_start %}
+            {% set s_end = solar_interval_end %}
+
+            {% for block, (h_start, h_end, effect) in sensors.items() %}
+              {% set block_start = s_start.replace(hour=h_start % 24, minute=0, second=0, microsecond=0) %}
+              {% set block_end = s_start.replace(hour=h_end % 24, minute=0, second=0, microsecond=0) %}
+              {% if h_start >= h_end and block_start <= block_end %}
+                {% set block_end = block_end + timedelta(days=1) %}
+              {% endif %}
+              {% set overlap_start = [s_start, block_start] | max %}
+              {% set overlap_end = [s_end, block_end] | min %}
+              {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+              {% if delta > 0 %}
+                {% set ns_solar.kwh = ns_solar.kwh + delta * effect %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+
+          {% set ns_no_solar = namespace(kwh=0) %}
+          {% if solar_interval_start %}
+                    {% set no_solar_start = original_start %}
+                    {% set no_solar_end = solar_interval_start %}
+
+                    {% for block, (h_start, h_end, effect) in sensors.items() %}
+                              {# Block start och end på samma datum som no_solar_start #}
+                              {% set b_start = no_solar_start.replace(hour=h_start % 24, minute=0, second=0, microsecond=0) %}
+                              {% set b_end = b_start.replace(hour=h_end % 24) %}
+
+                              {# Om block sträcker sig över midnatt, lägg till 1 dag #}
+                              {% if h_start >= h_end %}
+                                        {% set b_end = b_end + timedelta(days=1) %}
+                              {% endif %}
+
+                              {# Om block är helt före intervallet, flytta till nästa dag #}
+                              {% if b_end <= no_solar_start %}
+                                        {% set b_start = b_start + timedelta(days=1) %}
+                                        {% set b_end = b_end + timedelta(days=1) %}
+                              {% endif %}
+
+                              {# Beräkna överlapp #}
+                              {% set overlap_start = [no_solar_start, b_start] | max %}
+                              {% set overlap_end = [no_solar_end, b_end] | min %}
+                              {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+                              {% if delta > 0 %}
+                                        {% set ns_no_solar.kwh = ns_no_solar.kwh + delta * effect %}
+                              {% endif %}
+                    {% endfor %}
+          {% endif %}
+
+
+             {# --- Justerad beräkning med min SoC --- #}
+            {% set battery_capacity = states('input_number.battery_total_capacity_kwh') | float(0) %}
+            {% set battery_soc_percent = states('sensor.batteries_state_of_capacity') | float(0) %}
+            {% set min_soc = states('number.batteries_end_of_discharge_soc') | float(0) %}
+
+            {% set safe_den = (100 - min_soc) %}
+            {% if safe_den <= 0 %}
+                {% set usable_capacity = 0 %}
+                {% set battery_charge_kwh = 0 %}
+            {% else %}
+                {% set usable_capacity = battery_capacity * ((100 - min_soc) / 100) %}
+                {% set soc_clamped = battery_soc_percent %}
+                {% if soc_clamped < min_soc %}
+                    {% set soc_clamped = min_soc %}
+                {% endif %}
+                {% if soc_clamped > 100 %}
+                    {% set soc_clamped = 100 %}
+                {% endif %}
+                {% set battery_charge_kwh = usable_capacity * ((soc_clamped - min_soc) / safe_den) %}
+            {% endif %}
+            
+            {% set buffer = states('input_number.battery_buffer_kwh') | float(0) %}
+
+            {% set solar_diff = [ns_solar.kwh - solar_kwh, 0] | max %}
+            {% set raw_total = ns_no_solar.kwh + solar_diff - battery_charge_kwh + buffer %}
+            {% set total_energy_need = [raw_total, 0] | max %}
+
+            {{ total_energy_need | round(2) }}
+      attributes:
+          search_interval: >
+            {% set t1 = states('sensor.battery_charge_window_cheapest_2').split(' - ')[0] %}
+            {% set t2 = states('sensor.battery_charge_window_cheapest_1b').split(' - ')[0] %}
+            {% set start = as_datetime(t1) %}
+            {% set end = as_datetime(t2) %}
+            {{ start.isoformat() }} - {{ end.isoformat() }}
+
+          sun_interval: >
+            {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+            {% set t1 = states('sensor.battery_charge_window_cheapest_2').split(' - ')[0] %}
+            {% set t2 = states('sensor.battery_charge_window_cheapest_1b').split(' - ')[0] %}
+            {% set start = as_datetime(t1) %}
+            {% set end = as_datetime(t2) %}
+            {% set solar_interval_start = none %}
+            {% set solar_interval_end = none %}
+            {% if forecast and 'watt_hours_period' in forecast %}
+              {% set start_ts = as_timestamp(start) %}
+              {% set end_ts = as_timestamp(end) %}
+              {% set entries = forecast['watt_hours_period']
+                | selectattr('date', 'defined')
+                | selectattr('date', '>=', start_ts | timestamp_local)
+                | selectattr('date', '<=', end_ts | timestamp_local)
+                | list %}
+              {% set valid_entries = entries
+                | selectattr('values', 'defined')
+                | selectattr('values', '>', 0)
+                | list %}
+              {% if valid_entries | length > 0 %}
+                {% set solar_interval_start = (valid_entries[0].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                {% set solar_interval_end = (valid_entries[-1].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+              {% endif %}
+            {% endif %}
+            {% if solar_interval_start and solar_interval_end %}
+              {{ solar_interval_start.isoformat() }} - {{ solar_interval_end.isoformat() }}
+            {% else %}
+              1970-01-01T00:00:00+00:00 - 1970-01-01T00:00:00+00:00
+            {% endif %}
+
+          no_sun_interval: >
+            {% set t1 = states('sensor.battery_charge_window_cheapest_2').split(' - ')[0] %}
+            {% set start = as_datetime(t1) %}
+            {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+            {% set solar_interval_start = none %}
+            {% if forecast and 'watt_hours_period' in forecast %}
+              {% set start_ts = as_timestamp(start) %}
+              {% set entries = forecast['watt_hours_period']
+                | selectattr('date', 'defined')
+                | selectattr('date', '>=', start_ts | timestamp_local)
+                | list %}
+              {% set valid_entries = entries
+                | selectattr('values', 'defined')
+                | selectattr('values', '>', 0)
+                | list %}
+              {% if valid_entries | length > 0 %}
+                {% set solar_interval_start = (valid_entries[0].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+              {% endif %}
+            {% endif %}
+            {% if solar_interval_start %}
+              {{ start.isoformat() }} - {{ solar_interval_start.isoformat() }}
+            {% else %}
+              1970-01-01T00:00:00+00:00 - 1970-01-01T00:00:00+00:00
+            {% endif %}
+
+          battery_capacity: >
+                {# Visar aktuell laddning i kWh *ovanför* min SoC (dvs det som faktiskt är användbart) #}
+                {% set capacity = states('input_number.battery_total_capacity_kwh') | float(0) %}
+                {% set soc = states('sensor.batteries_state_of_capacity') | float(0) %}
+                {% set min_soc = states('number.batteries_end_of_discharge_soc') | float(0) %}
+                {% set denom = (100 - min_soc) %}
+                {% if denom <= 0 %}
+                    {{ 0.0 }}
+                {% else %}
+                    {% set usable_capacity = capacity * ((100 - min_soc) / 100) %}
+                    {% set soc_clamped = soc %}
+                    {% if soc_clamped < min_soc %}
+                        {% set soc_clamped = min_soc %}
+                    {% endif %}
+                    {% if soc_clamped > 100 %}
+                        {% set soc_clamped = 100 %}
+                    {% endif %}
+                    {% set current_kwh = usable_capacity * ((soc_clamped - min_soc) / denom) %}
+                    {{ current_kwh | round(2) }}
+                {% endif %}
+
+#          usable_capacity: >
+#                {# Total användbar kapacitet (kWh) givet min SoC #}
+#                {% set capacity = states('input_number.battery_total_capacity_kwh') | float(0) %}
+#                {% set min_soc = states('number.batteries_end_of_discharge_soc') | float(0) %}
+#                {% set denom = (100 - min_soc) %}
+#                {% if denom <= 0 %}
+#                    {{ 0.0 }}
+#                {% else %}
+#                    {{ (capacity * ((100 - min_soc) / 100)) | round(2) }}
+#                {% endif %}
+          
+          buffer: >
+                {% set buffer = states('input_number.battery_buffer_kwh') | float(0) %}
+                {{ buffer | round(2) }}
+
+          estimated_solar_energy: >
+            {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+            {% set t1 = states('sensor.battery_charge_window_cheapest_2').split(' - ')[0] %}
+            {% set t2 = states('sensor.battery_charge_window_cheapest_1b').split(' - ')[0] %}
+            {% set start = as_datetime(t1) %}
+            {% set end = as_datetime(t2) %}
+            {% set solar_kwh = 0 %}
+            {% if forecast and 'watt_hours_period' in forecast %}
+              {% set start_ts = as_timestamp(start) %}
+              {% set end_ts = as_timestamp(end) %}
+              {% set entries = forecast['watt_hours_period']
+                | selectattr('date', 'defined')
+                | selectattr('date', '>=', start_ts | timestamp_local)
+                | selectattr('date', '<=', end_ts | timestamp_local)
+                | list %}
+              {% set valid_entries = entries
+                | selectattr('values', 'defined')
+                | selectattr('values', '>', 0)
+                | list %}
+              {% if valid_entries | length > 0 %}
+                {% set solar_kwh = (valid_entries | map(attribute='values') | sum | default(0)) / 1000 * 0.9 %}
+              {% endif %}
+            {% endif %}
+            {{ solar_kwh | round(2) }}
+
+          estimated_energy_sun_interval: >
+            {% set t1 = states('sensor.battery_charge_window_cheapest_2').split(' - ')[0] %}
+            {% set t2 = states('sensor.battery_charge_window_cheapest_1b').split(' - ')[0] %}
+            {% set start = as_datetime(t1) %}
+            {% set end = as_datetime(t2) %}
+            {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+            {% set s_start = none %}
+            {% set s_end = none %}
+            {% if forecast and 'watt_hours_period' in forecast %}
+              {% set start_ts = as_timestamp(start) %}
+              {% set end_ts = as_timestamp(end) %}
+              {% set entries = forecast['watt_hours_period']
+                | selectattr('date', 'defined')
+                | selectattr('date', '>=', start_ts | timestamp_local)
+                | selectattr('date', '<=', end_ts | timestamp_local)
+                | list %}
+              {% set valid_entries = entries
+                | selectattr('values', 'defined')
+                | selectattr('values', '>', 0)
+                | list %}
+              {% if valid_entries | length > 0 %}
+                {% set s_start = (valid_entries[0].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                {% set s_end = (valid_entries[-1].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+              {% endif %}
+            {% endif %}
+
+            {% set sensors = {
+              'morning': (5, 10, states('sensor.energy_avg_morning') | float(0)),
+              'day': (10, 15, states('sensor.energy_avg_day') | float(0)),
+              'evening': (15, 22, states('sensor.energy_avg_evening') | float(0)),
+              'night_evening': (22, 24, states('sensor.energy_avg_night') | float(0)),
+              'night_morning': (0, 5, states('sensor.energy_avg_night') | float(0))
+            } %}
+            {% set ns = namespace(kwh=0) %}
+
+            {% if s_start and s_end %}
+              {% for block, (h_start, h_end, effect) in sensors.items() %}
+                {% set block_start = s_start.replace(hour=h_start % 24, minute=0, second=0, microsecond=0) %}
+                {% set block_end = s_start.replace(hour=h_end % 24, minute=0, second=0, microsecond=0) %}
+                {% if h_start >= h_end and block_start <= block_end %}
+                  {% set block_end = block_end + timedelta(days=1) %}
+                {% endif %}
+                {% set overlap_start = [s_start, block_start] | max %}
+                {% set overlap_end = [s_end, block_end] | min %}
+                {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+                {% if delta > 0 %}
+                  {% set ns.kwh = ns.kwh + delta * effect %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+
+            {{ ns.kwh | round(2) }}
+
+          estimated_energy_no_sun_interval: >
+                    {% set t1 = states('sensor.battery_charge_window_cheapest_2').split(' - ')[0] %}
+                    {% set start = as_datetime(t1) %}
+                    {% set forecast = state_attr('sensor.solar_forecast_west', 'west') %}
+                    {% set s_start = none %}
+
+                    {% if forecast and 'watt_hours_period' in forecast %}
+                              {% set entries = forecast['watt_hours_period']
+                                | selectattr('date', 'defined')
+                                | selectattr('date', '>=', as_timestamp(start) | timestamp_local)
+                                | list %}
+                              {% set valid_entries = entries
+                                | selectattr('values', 'defined')
+                                | selectattr('values', '>', 0)
+                                | list %}
+                              {% if valid_entries | length > 0 %}
+                                        {% set s_start = (valid_entries[0].date | as_datetime).replace(minute=0, second=0, microsecond=0) %}
+                              {% endif %}
+                    {% endif %}
+
+                    {% set end = s_start if s_start else start %}
+
+                    {% set sensors = {
+                              'morning': (5, 10, states('sensor.energy_avg_morning') | float(0)),
+                              'day': (10, 15, states('sensor.energy_avg_day') | float(0)),
+                              'evening': (15, 22, states('sensor.energy_avg_evening') | float(0)),
+                              'night_evening': (22, 24, states('sensor.energy_avg_night') | float(0)),
+                              'night_morning': (0, 5, states('sensor.energy_avg_night') | float(0))
+                    } %}
+
+                    {% set ns = namespace(kwh=0) %}
+
+                    {% for block, (h_start, h_end, effect) in sensors.items() %}
+                              {% set b_start = start.replace(hour=h_start % 24, minute=0, second=0, microsecond=0) %}
+                              {% set b_end = b_start.replace(hour=h_end % 24) %}
+
+                              {# Midnattblock hanteras #}
+                              {% if h_start >= h_end %}
+                                        {% set b_end = b_end + timedelta(days=1) %}
+                              {% endif %}
+
+                              {# Flytta block framåt om det ligger helt före intervallet #}
+                              {% if b_end <= start %}
+                                        {% set b_start = b_start + timedelta(days=1) %}
+                                        {% set b_end = b_end + timedelta(days=1) %}
+                              {% endif %}
+
+                              {% set overlap_start = [start, b_start] | max %}
+                              {% set overlap_end = [end, b_end] | min %}
+                              {% set delta = (overlap_end - overlap_start).total_seconds() / 3600 %}
+
+                              {% if delta > 0 %}
+                                        {% set ns.kwh = ns.kwh + delta * effect %}
+                              {% endif %}
+                    {% endfor %}
+
+                    {{ ns.kwh | round(2) }}
 
 
 
