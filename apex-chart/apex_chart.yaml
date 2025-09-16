@@ -117,7 +117,7 @@ series:
         color: "#ffeb3b"
       - value: 15
         color: "#fbc02d"
-  - entity: sensor.nordpool_kwh_se4_sek_1_10_0
+  - entity: sensor.YOUR_NORDPOOL_SENSOR
     yaxis_id: spotpris
     type: area
     name: Idag
@@ -147,7 +147,7 @@ series:
       extremas: true
       in_brush: false
       in_legend: false
-  - entity: sensor.nordpool_kwh_se4_sek_1_10_0
+  - entity: sensor.YOUR_NORDPOOL_SENSOR
     yaxis_id: spotpris
     name: Imorgon
     type: area
