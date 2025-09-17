@@ -69,7 +69,10 @@ Steg 14: Skapa följande input_number för att kunna justera kraven för det sup
 - price_limit_supercheap
 - hours_required_supercheap
 - solar_threshold_kwh
-- battery_soc_limit_supercheap         
+- battery_soc_limit_supercheap
+
+ta bort superbilliga koden
+lägg till sun integrationen - next setting
 
 <img width="1465" height="285" alt="Skärmbild 2025-09-16 153500" src="https://github.com/user-attachments/assets/bfd140df-c7a1-418f-9390-0c5bff5e6151" />
 Med en apex-chart kan du på ett visuellt tydligt sätt synliggöra laddningsfönster, prognos för solel och elpriser. Exmpelkod finns under i mappen apex-chart. Du behöver justera koden utifrån dina sensorer, men har du följt ovanstående instruktioner är det bara din nordpool-sensor som ska läggas in. 
