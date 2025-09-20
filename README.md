@@ -112,5 +112,5 @@ Skapa en input_boolean (via helper) som avaktiverar samtliga automationer för a
 - manual_charge
 
 ### Steg 13
-Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
+Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view.yaml. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
 
