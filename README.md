@@ -1,80 +1,116 @@
 # Home Assistant Huawei Energy Managment
-Code examples for Home Assistant energy management. Focus on optimizing self-consumption, reducing costs, and improving efficiency with batteries, solar, and EV charging. Hobby project – shared as-is, use at your own risk.
+Code examples for Home Assistant energy management. Focus on optimizing self-consumption, reducing costs, and improving efficiency with batteries, solar, and EV charging. 
 
-Min setup
+> [!WARNING]
+> Hobby project – shared as-is, use at your own risk.
 
-Huawei Solar Integration (https://github.com/wlcrs/huawei_solar)
-- Solceller
-- Batteri
-- Smart energimätare
+> [!IMPORTANT]
+> You have du adjust the code to your setup.
 
-Laddbox (https://www.home-assistant.io/integrations/wallbox/)
+### My setup 
+
+[Huawei Solar Integration](https://github.com/wlcrs/huawei_solar)
+- PV
+- Battery (Luna 2000 S1)
+- Smart Power Meter
+
+[Wallbox](https://www.home-assistant.io/integrations/wallbox/)
 - Wallbox Pulsar Max 
 
-<img width="1812" height="814" alt="Skärmbild 2025-09-15 221922" src="https://github.com/user-attachments/assets/36321474-aa4d-4384-b6cf-5126dd4b973d" /> Bilden ovan är en skärmbild från min vy i Home Assistant där jag justera logiken. 
+### Steg 1
+Skapa en template (se template.yaml) som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen  - ge den namnet: huseffekt_exl_elbil. Skapa därefter en sensor (se sensors.yaml) som ackumulerar kWh som du namnger energy_total_exl_elbil. 
+Min kod förutsätter att du har en smartmätare via Huawei intergrationen samt att du justerat dayily_yail enligt [följande](https://github.com/wlcrs/huawei_solar/wiki/Daily-Solar-Yield#a-better-approach)
 
-Steg 1: Skapa en template (se template.yaml) som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen  - ge den namnet: huseffekt_exl_elbil. Skapa därefter en sensor (se sensors.yaml) som ackumulerar kWh som du namnger energy_total_exl_elbil. 
-Min kod förutsätter att du har en smartmätare via Huawei intergrationen samt att du justerat dayily_yail enligt följande: https://github.com/wlcrs/huawei_solar/wiki/Daily-Solar-Yield#a-better-approach
-Om din setup ser ut på annat sätt kan du utgå från koden (se template.yaml) för att skapa en sensor som håller koll på husets aktuella effekt. 
+> [!IMPORTANT]
+> Om din setup ser ut på annat sätt kan du utgå från koden (se template.yaml) för att skapa en sensor som håller koll på husets aktuella effekt. 
 
-Steg 2: Skapa SQL-sensorer (se sql-sensor) för att följa din energiförbrukning. Mina SQL-sensorer beräknar kWh/h utifrån din förbrukning de senaste 3 dagarna. Detta värde går att justera i koden. Du skapar SQL-sensorer via integrationer. (https://www.home-assistant.io/integrations/sql/)
+### Steg 2
+Skapa SQL-sensorer (se mappen sql-sensor) för att följa din energiförbrukning. SQL-sensorer beräknar kWh/h för de senaste 3 dagarna. Antalet dagar går att justera i koden. Skapar SQL-sensorer via [integrationer](https://www.home-assistant.io/integrations/sql/)
 Ange följande + frågan som finns i filerna i mappen sql-sensor
 - Kolumn: avg_kwh_per_hour
 - Måttenhet: kWh/h
 
-Observera att du behöver ersätta sensor.energy_total_exl_elbil om du valde något annat namn i steg 1. 
+> [!IMPORTANT]
+> Ersätt sensor.energy_total_exl_elbil om du valde något annat namn i steg 1. 
 
-Steg 3: Skapa en command line sensor (se command_line.yaml) för solelsprognos (data hämtas från https://forecast.solar/)
-Observer att du behöver ersätta sensor.solar_forecast_west i resten av koden om du väljer något annat namn. Mitt råd är att använda ett annat friendly name om du önskar ett annat namn. Det kommer inte påverka kommande kod. 
+### Steg 3
+Skapa en command line sensor (se command_line.yaml) för [solelsprognos](https://forecast.solar/)
 
-Steg 4: Skapa tre template sensorer (se template.yaml) som söker upp billiga laddningsfönster (observera att template sensorerna ska ha en egen trigger). Logiken bakom laddningsfönsterna kommer du kunna styra vi UI. Du behöver även lägga in din Nordpool sensor i template koden (min är i SEK/kWh). Template sensorerna har nedanstående namn i filen template.yaml.
+> [!IMPORTANT]
+> Ersätt sensor.solar_forecast_west i resten av koden om något annat namn valdes. Mitt råd är att använda ett annat friendly name om du önskar ett annat namn. Detta kommer inte påverka resterande kod
+
+### Steg 4
+Skapa tre template sensorer (se template.yaml) som söker upp billiga laddningsfönster. Template sensorerna har nedanstående namn i filen template.yaml.
 - battery_charge_window_cheapest_1a
 - battery_charge_window_cheapest_1b
 - battery_charge_window_cheapest_2
 
-Steg 5: Skapa två input_number (via helper). Ge dem följande namn:
-- battery_charge_duration_hours
-- battery_total_capacity_kwh
+> [!IMPORTANT]
+> Template sensorerna ska ha en egen trigger och lägg in din Nordpool sensor i template koden (min är i SEK/kWh).
 
-Steg 6: Skapa en input_button (via helper) för uppdateringen av laddningsfönster. Knappen bidrar till smidig manuell uppdatering, men även för den automatiska uppdateringen. Ge den följande namn: 
+### Steg 5 
+Skapa tre input_number (via helper). Ge dem följande namn:
+- battery_charge_duration_hours
+  - Lägsta värde: 1
+  - Högsta värde: 6
+  - Steglängd: 1
+  - Måttenhet: h
+- battery_total_capacity_kwh
+  - Lägsta värde: 0
+  - Högsta värde 100
+  - Steglängd: 0,1
+  - Måttenhet: kWh
+- price_limit_supercheap
+  - Lägsta värde: 0
+  - Högsta värde: 5
+  - Steglängd: 0,01
+  - Måttenhet: SEK/kWh
+
+### Steg 6 
+Skapa en input_button (via helper) för uppdateringen av laddningsfönster. Knappen bidrar till smidig manuell uppdatering vid behov, men även för den automatiska uppdateringen. Ge den följande namn: 
 - update_battery_cheapest_charge
 
-Steg 7: Skapa en template sensor (se template.yaml) som håller koll på om nya elpriser finns tillgängliga. Observera att denna ska ligga som en binary_sensor under template. Lägg in din Nordpool-sensor i koden. 
+### Steg 7
+Skapa en template sensor (se template.yaml) som håller koll på om nya elpriser finns tillgängliga. 
 
-Steg 8: Skapa en automation (battery_update_charge_interval.yaml i mappen automations) som styr uppdateringen av laddningsfönsterna. När du gjort detta har du tre laddningsfönster som uppdateras när nya elpriser släpps och som ska användas för att ladda batteriet. Sensorernas namn hittar du i steg 4. 
+> [!IMPORTANT]
+> Template sensorn ska ligger som en binary_sensor under template och lägg till din Nordpool-sensor i koden.
 
-Steg 9: Skapa två template sensorer (se template.yaml) som beräknar energibehovet. Observera att koden är lång och att dessa sensorer inte ska ha en egen trigger. Template sensorerna har nedanstående namn i filen template.yaml. 
+### Steg 8 
+Skapa en automation (battery_update_charge_interval.yaml i mappen automations) som styr uppdateringen av laddningsfönsterna. När du gjort detta har du tre laddningsfönster som uppdateras när nya elpriser släpps och som kommer att användas för att ladda batteriet. Sensorernas namn hittar du i steg 4. 
+
+### Steg 9
+Skapa två template sensorer (se template.yaml) som beräknar energibehovet. Template sensorerna har nedanstående namn i filen template.yaml. 
 - battery_charge_energy_1a_2
 - battery_charge_energy_2_1b
 
-För att sensorerna ska fungera krävs sensor.batteries_state_of_capacity som visar aktuell batterinivå (finns i Huawei integrationen). Finns inte denna behöver du justera koden eller din sensors namn. Du behöver även number.batteries_end_of_discharge_soc som visar lägsta urladdninvsnivå i %. Även den följer med Huawei integrationen. Finns inte denna behöver du justera koden eller din sensors namn.
+> [!IMPORTANT]
+> Observera att koden är lång och att dessa sensorer inte ska ha en egen trigger.
 
-Steg 10: Skapa en input_number (via helper) för att addera kWh till energibehovet vilket skapar en möjlighet att trimma in logiken utifrån ditt energibehov. Ge sensorn följande namn: 
+> [!WARNING]
+> För att sensorerna ska fungera krävs sensor.batteries_state_of_capacity som visar aktuell batterinivå. Du behöver även number.batteries_end_of_discharge_soc som visar lägsta urladdninvsnivå i %. Båda entiterna följer med [Huawei Solar Integration](https://github.com/wlcrs/huawei_solar). Finns inte dessa behöver du justera koden eller din sensorers namn.
+
+### Steg 10
+Skapa en input_number (via helper) för att addera kWh till energibehovet vilket skapar en möjlighet att trimma in logiken utifrån ditt energibehov. Ge sensorn följande namn: 
 - battery_buffer_kwh
+   - Lägsta värde: 0
+   - Högsta värde: 10
+   - Steglängd: 1
+   - Måttenhet: kWh
 
-Steg 11: Skapa två automationer som kommer att styra om batteriet ska laddas eller inte. I mappen automations heter dessa 
+### Steg 11
+Skapa två automationer som kommer att styra om batteriet ska laddas eller inte. I mappen automations heter dessa 
 - battery_luna_2000_S1_interval_1a_2.yaml
 - battery_luna_2000_S1_interval_2_1b.yaml
 
-Automationerna är byggda utifrån Huawei integrationen och utifrån batteriet Luna2000 - S1. Om du har en annan setup får du justera automationerna utifrån den. Har du samma setup behöver du bara lägga till ditt device_id. 
-Detta hittar du under utvecklarverktyg -> åtgärder -> klicka på åtgärd -> skriv huawei -> välj forcible charge -> klicka på gå till UI-läge -> Välj Batteries i rullgardinen på raden battery -> Klicka på gå till YAML-läge - Då ska du få fram till device_id
+> [!WARNING]
+>Automationerna är byggda utifrån [Huawei Solar Integration](https://github.com/wlcrs/huawei_solar) och utifrån batteriet Luna2000 - S1. Om du har en annan setup får du justera automationerna utifrån den. Har du samma setup behöver du bara lägga till ditt device_id. 
+Detta hittar på följande sätt: Utvecklarverktyg -> Åtgärder -> Klicka på åtgärd -> Skriv huawei -> Välj forcible charge -> Klicka på gå till UI-läge -> Välj Batteries i rullgardinen på raden battery -> Klicka på gå till YAML-läge - Då ska du få fram till device_id
 
-Steg 12: Skapa en input_boolean (via helper) som avaktiverar samtliga automationer för att kunna ladda nu. Namge ge den med följande namn: 
+### Steg 12
+Skapa en input_boolean (via helper) som avaktiverar samtliga automationer för att kunna ladda nu. Namge ge den med följande namn: 
 - manual_charge
 
-Steg 13: Skapa en templete sensor (se template.yaml) som söker upp ett superbilligt laddningsfönster om solprognosen är låg och batteriet är dåligt laddat. Syftet med detta intervall är att inte vissa ett superbilligt elpris och då solelen inte räcker till och batterinivån är låg. Template sensorn har nedanstående namn och finns i filen template.yaml
--  battery_supercheap_decision
+### Steg 13
+Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
 
-Steg 14: Skapa följande input_number för att kunna justera kraven för det superbilliga intervallet
-- price_limit_supercheap
-- hours_required_supercheap
-- solar_threshold_kwh
-- battery_soc_limit_supercheap
-
-ta bort superbilliga koden
-lägg till sun integrationen - next setting
-https://www.home-assistant.io/integrations/sun
-sensor.sun_next_setting
-
-<img width="1465" height="285" alt="Skärmbild 2025-09-16 153500" src="https://github.com/user-attachments/assets/bfd140df-c7a1-418f-9390-0c5bff5e6151" />
-Med en apex-chart kan du på ett visuellt tydligt sätt synliggöra laddningsfönster, prognos för solel och elpriser. Exmpelkod finns under i mappen apex-chart. Du behöver justera koden utifrån dina sensorer, men har du följt ovanstående instruktioner är det bara din nordpool-sensor som ska läggas in. 
