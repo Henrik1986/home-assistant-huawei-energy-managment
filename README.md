@@ -8,10 +8,9 @@ Code examples for Home Assistant energy management. Focus on optimizing self-con
 > You have du adjust the code to your setup.
 
 ### Introduction 
-Den smarta laddningsens grundlogik utgår från då nya elpriser blir tillgängliga. Då söks de billigaste laddningsintervall upp. Utifrån dessa beräknas energibehovet mellan laddningsintervallen och på så sätt laddningbehovet vid varje laddningstillfälle. Prognosen för solel räknas av för att sträva med självförsörning. Räcker inte solelen till att ladda upp batteriet och elpriset är väldigt låg (styrs via UI) fylls batteriet så mycket som möjligt. Vid högt elpris (styrs vid UI) och därtill ett lågt pris (styrs via UI) vid nästa laddningstillfälle säljer eventuellt överskott. 
+The smart charging logic works when new electricity prices are released. It looks for the cheapest charging times and calculates how much energy is needed before the next charging window. A solar forecast is included to increase self-sufficiency. If solar power isn’t enough and the price is very low (set in the UI), the battery charges as much as possible. If prices are high now but low at the next charging window, any surplus can be sold.
 
-:boom: BONUS! 
-Urladdningen av batteriet kan begränas till att enbart täcka husets behov vilket kan vara önskvärt vid laddning av elbil. 
+💥 BONUS! Battery discharge can be limited to only cover the home’s demand, which is useful when charging an EV.
 
 <img width="1825" height="705" alt="Skärmbild 2025-09-20 222116" src="https://github.com/user-attachments/assets/df56b8dd-9570-4b43-a28f-6370251f41a5" />
 _ Bilden ovan visar adminvyn via Home Assistant _
