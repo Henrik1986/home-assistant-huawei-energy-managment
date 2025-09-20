@@ -1,0 +1,198 @@
+alias: "Batteri – Schemalagd urladdning vid högt elpris"
+description: >
+  Startar urladdning (ToU) då elriset är högt. Laddar ur överskottet.  
+  Annars hålls Maximize self-consumption aktivt.
+mode: single
+triggers:
+  - trigger: time_pattern
+    minutes: "/15"  # Kontroll var 15:e minut
+condition:
+  - condition: state
+    entity_id: input_boolean.manual_charge
+    state: "off"
+action:
+  - choose:
+# 1: TOU-LÄGE OM BATTERI HAR ÖVERSKOTT
+      - conditions:
+# KONTROLLERAR WORK MODE - UNDVIKER ONÖDIGA ACTIONS
+          - condition: template
+            value_template: > 
+              {{ states('select.batteries_working_mode') != 'fully_fed_to_grid' }}
+# KONTROLLERAR OM ELEN ÄR DYR - GER TRUE OM LÄGE ATT SÄLJA
+          - condition: template
+            value_template: >
+              {% set cur = states('sensor.YOUR_NORDPOOL_SENSOR') | float(0) %}
+              {% set prices = state_attr('sensor.YOUR_NORDPOOL_SENSOR','today') or [] %}
+              {% set threshold = states('input_number.expensive_electricity') | float(3) %}
+
+              {% set over_threshold = prices | map('float') | select('>=', threshold) | list %}
+              {% set sorted_desc = over_threshold | sort(reverse=true) %}
+
+              {# välj topp-3 timmar över tröskeln #}
+              {% set topN = sorted_desc[0:3] if (sorted_desc | length) >= 3 else sorted_desc %}
+              {% set in_topN = (topN | length > 0) and (cur >= (topN | min)) %}
+
+              {% set result = in_topN %}
+              {{ result }}
+# KONTROLLERAR OM DET FINNS ETT ENERGIÖVERSKOTT I BATTERIET - GER TRUE OM DET FINNS
+          - condition: template
+            value_template: >
+              {% set soc = states('sensor.batteries_state_of_capacity') | float(0) %}
+              {% set capacity = states('input_number.battery_total_capacity_kwh') | float(0) %}
+              {% set end_soc = states('number.batteries_end_of_discharge_soc') | float(0) %}
+              {% set battery_kwh = (soc - end_soc)/100 * capacity %}
+
+              {# Sensor 1 #}
+              {% set need_1 = (state_attr('sensor.battery_charge_energy_1a_2','Estimated energy sun interval') | float(0)) +
+                              (state_attr('sensor.battery_charge_energy_1a_2','Estimated energy no sun interval') | float(0)) +
+                              (state_attr('sensor.battery_charge_energy_1a_2','buffer') | float(0)) %}
+              {% set interval_1 = state_attr('sensor.battery_charge_energy_1a_2','search_interval') %}
+              {% if interval_1 is string and ' - ' in interval_1 %}
+                {% set start_1, end_1 = interval_1.split(' - ') %}
+                {% set start_1 = start_1 | as_datetime %}
+                {% set end_1 = end_1 | as_datetime %}
+                {% set cond_1 = now() >= start_1 and now() <= end_1 and (battery_kwh - need_1) > 0 %}
+              {% else %}
+                {% set cond_1 = false %}
+              {% endif %}
+
+              {# Sensor 2 #}
+              {% set need_2 = (state_attr('sensor.battery_charge_energy_2_1b','Estimated energy sun interval') | float(0)) +
+                              (state_attr('sensor.battery_charge_energy_2_1b','Estimated energy no sun interval') | float(0)) +
+                              (state_attr('sensor.battery_charge_energy_2_1b','buffer') | float(0)) %}
+              {% set interval_2 = state_attr('sensor.battery_charge_energy_2_1b','search_interval') %}
+              {% if interval_2 is string and ' - ' in interval_2 %}
+                {% set start_2, end_2 = interval_2.split(' - ') %}
+                {% set start_2 = start_2 | as_datetime %}
+                {% set end_2 = end_2 | as_datetime %}
+                {% set cond_2 = now() >= start_2 and now() <= end_2 and (battery_kwh - need_2) > 0 %}
+              {% else %}
+                {% set cond_2 = false %}
+              {% endif %}
+
+              {{ cond_1 or cond_2 }}
+
+# KONTROLLERAR OM ELPRISET ÄR LÅGT VID NÄSTA LADDNINGSFÖNSTER - GER TRUE OM DET ÄR DET
+          - condition: template
+            value_template: >
+              {%- set price_limit = states('input_number.battery_charge_price') | float(1.0) -%}
+              {%- set intervals_raw = [
+                  states('sensor.battery_charge_window_cheapest_1a'),
+                  states('sensor.battery_charge_window_cheapest_2')
+              ] -%}
+              {%- set raw_today = state_attr('sensor.YOUR_NORDPOOL_SENSOR','raw_today') or [] -%}
+              {%- set raw_tomorrow = state_attr('sensor.YOUR_NORDPOOL_SENSOR','raw_tomorrow') or [] -%}
+              {%- set prices_all = raw_today + raw_tomorrow -%}
+              {%- set now_dt = now() -%}
+              {%- set chosen_interval = namespace(start=None, end=None, meets_condition=False) -%}
+
+              {%- for interval in intervals_raw if interval and ' - ' in interval -%}
+                  {%- set start_str, end_str = interval.split(' - ') -%}
+                  {%- set start_dt = start_str | as_datetime -%}
+                  {%- set end_dt = end_str | as_datetime -%}
+
+                  {%- set filtered_prices = prices_all
+                      | selectattr('start','defined')
+                      | selectattr('end','defined')
+                      | selectattr('start','>=', start_dt)
+                      | selectattr('end','<=', end_dt)
+                      | map(attribute='value')
+                      | map('float')
+                      | list
+                  -%}
+
+                  {%- set avg_price = filtered_prices | length > 0
+                      and (filtered_prices | sum) / (filtered_prices | length)
+                      or none -%}
+
+                  {%- set meets_condition = avg_price is not none and avg_price <= price_limit -%}
+
+                  {%- if (start_dt <= now_dt < end_dt or start_dt > now_dt) and chosen_interval.start is none -%}
+                      {%- set chosen_interval.start = start_dt -%}
+                      {%- set chosen_interval.end = end_dt -%}
+                      {%- set chosen_interval.meets_condition = meets_condition -%}
+                  {%- endif -%}
+              {%- endfor -%}
+
+              {{ chosen_interval.start is not none and chosen_interval.meets_condition or false }}
+        sequence:
+          - service: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.discharge
+          - service: select.select_option
+            target:
+              entity_id: select.batteries_working_mode
+            data:
+             option: "fully_fed_to_grid"
+
+
+      - conditions:
+          # Workmode måste alltid kontrolleras
+          - condition: and
+            conditions: 
+              - condition: template
+                value_template: > 
+                  {{ states('select.batteries_working_mode') != 'maximise_self_consumption' }}
+          # Någon av dessa två måste vara TRUE
+              - condition: or
+                conditions:
+                  # ELPRIS - Om det inte är läge att sälja
+                  - condition: template
+                    value_template: >
+                      {% set cur = states('sensor.YOUR_NORDPOOL_SENSOR') | float(0) %}
+                      {% set prices = state_attr('YOUR_NORDPOOL_SENSOR','today') or [] %}
+                      {% set threshold = states('input_number.expensive_electricity') | float(3) %}
+                      {% set over_threshold = prices | map('float') | select('>=', threshold) | list %}
+                      {% set sorted_desc = over_threshold | sort(reverse=true) %}
+                      {% set topN = sorted_desc[0:3] if (sorted_desc | length >= 3) else sorted_desc %}
+                      {% set in_topN = (topN | length > 0) and (cur >= (topN | min)) %}
+                      {{ not in_topN }}
+
+
+                  # ÖVERSKOTT - Om inget överskott finns
+                  - condition: template
+                    value_template: >
+                      {% set soc = states('sensor.batteries_state_of_capacity') | float(0) %}
+                      {% set capacity = states('input_number.battery_total_capacity_kwh') | float(0) %}
+                      {% set end_soc = states('number.batteries_end_of_discharge_soc') | float(0) %}
+                      {% set battery_kwh = (soc - end_soc)/100 * capacity %}
+
+                      {# Sensor 1 #}
+                      {% set need_1 = (state_attr('sensor.battery_charge_energy_1a_2','Estimated energy sun interval') | float(0)) +
+                                      (state_attr('sensor.battery_charge_energy_1a_2','Estimated energy no sun interval') | float(0)) +
+                                      (state_attr('sensor.battery_charge_energy_1a_2','buffer') | float(0)) %}
+                      {% set interval_1 = state_attr('sensor.battery_charge_energy_1a_2','search_interval') %}
+                      {% if interval_1 is string and ' - ' in interval_1 %}
+                        {% set start_1, end_1 = interval_1.split(' - ') %}
+                        {% set start_1 = start_1 | as_datetime %}
+                        {% set end_1 = end_1 | as_datetime %}
+                        {% set cond_1 = now() >= start_1 and now() <= end_1 and (battery_kwh - need_1) > 0 %}
+                      {% else %}
+                        {% set cond_1 = false %}
+                      {% endif %}
+
+                      {# Sensor 2 #}
+                      {% set need_2 = (state_attr('sensor.battery_charge_energy_2_1b','Estimated energy sun interval') | float(0)) +
+                                      (state_attr('sensor.battery_charge_energy_2_1b','Estimated energy no sun interval') | float(0)) +
+                                      (state_attr('sensor.battery_charge_energy_2_1b','buffer') | float(0)) %}
+                      {% set interval_2 = state_attr('sensor.battery_charge_energy_2_1b','search_interval') %}
+                      {% if interval_2 is string and ' - ' in interval_2 %}
+                        {% set start_2, end_2 = interval_2.split(' - ') %}
+                        {% set start_2 = start_2 | as_datetime %}
+                        {% set end_2 = end_2 | as_datetime %}
+                        {% set cond_2 = now() >= start_2 and now() <= end_2 and (battery_kwh - need_2) > 0 %}
+                      {% else %}
+                        {% set cond_2 = false %}
+                      {% endif %}
+ 
+                      {{ not (cond_1 or cond_2) }}
+        sequence:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.discharge
+          - service: select.select_option
+            target:
+              entity_id: select.batteries_working_mode
+            data:
+              option: "maximise_self_consumption"
+
