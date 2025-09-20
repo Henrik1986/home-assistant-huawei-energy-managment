@@ -62,16 +62,19 @@ Skapa tre input_number (via helper). Ge dem följande namn:
 - battery_charge_duration_hours
   - Lägsta värde: 1
   - Högsta värde: 6
+  - Visningsläge: Inmatningsfält
   - Steglängd: 1
   - Måttenhet: h
 - battery_total_capacity_kwh
   - Lägsta värde: 0
   - Högsta värde 100
+  - Visningsläge: Inmatningsfält
   - Steglängd: 0,1
   - Måttenhet: kWh
 - price_limit_supercheap
   - Lägsta värde: 0
   - Högsta värde: 5
+  - Visningsläge: Inmatningsfält
   - Steglängd: 0,01
   - Måttenhet: SEK/kWh
 
@@ -104,6 +107,7 @@ Skapa en input_number (via helper) för att addera kWh till energibehovet vilket
 - battery_buffer_kwh
    - Lägsta värde: 0
    - Högsta värde: 10
+   - Visningsläge: Inmatningsfält
    - Steglängd: 1
    - Måttenhet: kWh
 
@@ -126,6 +130,21 @@ Skapa en automation som kommer att styra om batteriet ska sälja om elpriser är
 
 > [!IMPORTANT]
 > Lägg in din Nordpool-sensor
+
+### Steg 14
+Skapa två input_number (via helper) för att kunna justera gränsvärdena för att sälja överskottet
+- battery_charge_price
+    - Lägsta värde: 0
+    - Högsta värde: 5
+    - Visningsläge: Inmatningsfält
+    - Steglängd: 0,01
+    - Måttenhet: SEK/kWH
+- expensive_electricity
+    - Lägsta värde: 0
+    - Högsta värde: 10
+    - Visningsläge: Inmatningsfält
+    - Stegläng: 0,1
+    - Måttenhete SEK/kWH
 
 ### Steg XX
 Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view.yaml. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
