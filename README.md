@@ -7,7 +7,16 @@ Code examples for Home Assistant energy management. Focus on optimizing self-con
 > [!IMPORTANT]
 > You have du adjust the code to your setup.
 
-### My setup 
+### Introduction 
+Den smarta laddningsens grundlogik utgår från då nya elpriser blir tillgängliga. Då söks de billigaste laddningsintervall upp. Utifrån dessa beräknas energibehovet mellan laddningsintervallen och på så sätt laddningbehovet vid varje laddningstillfälle. Prognosen för solel räknas av för att sträva med självförsörning. Räcker inte solelen till att ladda upp batteriet och elpriset är väldigt låg (styrs via UI) fylls batteriet så mycket som möjligt. Vid högt elpris (styrs vid UI) och därtill ett lågt pris (styrs via UI) vid nästa laddningstillfälle säljer eventuellt överskott. 
+
+:boom: BONUS! Urladdningen av batteriet kan begränas till att enbart täcka husets behov vilket kan vara önskvärt vid laddning av elbil. 
+
+<img width="1825" height="705" alt="Skärmbild 2025-09-20 222116" src="https://github.com/user-attachments/assets/df56b8dd-9570-4b43-a28f-6370251f41a5" />
+_Bilden ovan visar adminvyn via Home Assistant_
+
+
+## My setup 
 
 [Huawei Solar Integration](https://github.com/wlcrs/huawei_solar)
 - PV
@@ -112,5 +121,12 @@ Skapa en input_boolean (via helper) som avaktiverar samtliga automationer för a
 - manual_charge
 
 ### Steg 13
+Skapa en automation som kommer att styra om batteriet ska sälja om elpriser är högt och kommande elpris är lågt. I mappen automations heter denna
+- battery_luna_2000_S1_discharge.yaml
+
+> [!IMPORTANT]
+> Lägg in din Nordpool-sensor
+
+### Steg XX
 Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view.yaml. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
 
