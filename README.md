@@ -14,7 +14,7 @@ Den smarta laddningsens grundlogik utgår från då nya elpriser blir tillgängl
 Urladdningen av batteriet kan begränas till att enbart täcka husets behov vilket kan vara önskvärt vid laddning av elbil. 
 
 <img width="1825" height="705" alt="Skärmbild 2025-09-20 222116" src="https://github.com/user-attachments/assets/df56b8dd-9570-4b43-a28f-6370251f41a5" />
-_Bilden ovan visar adminvyn via Home Assistant_
+_ Bilden ovan visar adminvyn via Home Assistant _
 
 
 ## My setup 
