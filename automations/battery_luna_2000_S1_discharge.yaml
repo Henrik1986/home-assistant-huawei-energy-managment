@@ -43,8 +43,8 @@ action:
               {% set battery_kwh = (soc - end_soc)/100 * capacity %}
 
               {# Sensor 1 #}
-              {% set need_1 = (state_attr('sensor.battery_charge_energy_1a_2','Estimated energy sun interval') | float(0)) +
-                              (state_attr('sensor.battery_charge_energy_1a_2','Estimated energy no sun interval') | float(0)) +
+              {% set need_1 = (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_sun_interval') | float(0)) +
+                              (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_no_sun_interval') | float(0)) +
                               (state_attr('sensor.battery_charge_energy_1a_2','buffer') | float(0)) %}
               {% set interval_1 = state_attr('sensor.battery_charge_energy_1a_2','search_interval') %}
               {% if interval_1 is string and ' - ' in interval_1 %}
@@ -57,8 +57,8 @@ action:
               {% endif %}
 
               {# Sensor 2 #}
-              {% set need_2 = (state_attr('sensor.battery_charge_energy_2_1b','Estimated energy sun interval') | float(0)) +
-                              (state_attr('sensor.battery_charge_energy_2_1b','Estimated energy no sun interval') | float(0)) +
+              {% set need_2 = (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_sun_interval') | float(0)) +
+                              (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_no_sun_interval') | float(0)) +
                               (state_attr('sensor.battery_charge_energy_2_1b','buffer') | float(0)) %}
               {% set interval_2 = state_attr('sensor.battery_charge_energy_2_1b','search_interval') %}
               {% if interval_2 is string and ' - ' in interval_2 %}
@@ -158,8 +158,8 @@ action:
                       {% set battery_kwh = (soc - end_soc)/100 * capacity %}
 
                       {# Sensor 1 #}
-                      {% set need_1 = (state_attr('sensor.battery_charge_energy_1a_2','Estimated energy sun interval') | float(0)) +
-                                      (state_attr('sensor.battery_charge_energy_1a_2','Estimated energy no sun interval') | float(0)) +
+                      {% set need_1 = (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_sun_interval') | float(0)) +
+                                      (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_no_sun_interval') | float(0)) +
                                       (state_attr('sensor.battery_charge_energy_1a_2','buffer') | float(0)) %}
                       {% set interval_1 = state_attr('sensor.battery_charge_energy_1a_2','search_interval') %}
                       {% if interval_1 is string and ' - ' in interval_1 %}
@@ -172,8 +172,8 @@ action:
                       {% endif %}
 
                       {# Sensor 2 #}
-                      {% set need_2 = (state_attr('sensor.battery_charge_energy_2_1b','Estimated energy sun interval') | float(0)) +
-                                      (state_attr('sensor.battery_charge_energy_2_1b','Estimated energy no sun interval') | float(0)) +
+                      {% set need_2 = (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_sun_interval') | float(0)) +
+                                      (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_no_sun_interval') | float(0)) +
                                       (state_attr('sensor.battery_charge_energy_2_1b','buffer') | float(0)) %}
                       {% set interval_2 = state_attr('sensor.battery_charge_energy_2_1b','search_interval') %}
                       {% if interval_2 is string and ' - ' in interval_2 %}
