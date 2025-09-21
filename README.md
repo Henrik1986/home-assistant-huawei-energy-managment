@@ -165,6 +165,6 @@ Skapa två input_number (via helper) för att kunna justera gränsvärdena för 
     - Stegläng: 0,1
     - Måttenhete SEK/kWH
 
-### Steg XX
+### Steg 15
 Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view.yaml. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
 
