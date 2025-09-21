@@ -1,0 +1,40 @@
+alias: "Batteri – Skydd vid elbilsladdning"
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: sensor.WALLBOX_SENSOR #STATE SENSOR - OPERATION MODE LIKE CHARGING, LOCKED ETC
+  - platform: time_pattern
+    minutes: "/15"
+
+action:
+  - choose:
+      # 1. Om bilen laddar → begränsa discharge
+      - conditions:
+          - condition: state
+            entity_id: sensor.YOUR_WALLBOX_SENSOR
+            state: "Charging" #CHANGE TO RIGHT STATE FOR CHARGING
+        sequence:
+           - service: number.set_value
+             target:
+               entity_id: number.batteries_maximum_discharging_power # CHANGE SENSOR TO OUR HOUSE KW
+             data:
+              value: >
+                {{ (states('sensor.huseffekt_exl_elbil') | float(0)) * 1000 }} 
+
+
+      # 2. Om bilen inte laddar och begränsning är aktiv → återställ
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ states('sensor.YOUR_WALLBOX_SENSOR') != 'Charging' }}
+          - condition: numeric_state
+            entity_id: number.batteries_maximum_discharging_power
+            below: 7000
+        sequence:
+           - service: number.set_value
+             target:
+               entity_id: number.batteries_maximum_discharging_power
+             data:
+              value: 7000
+
