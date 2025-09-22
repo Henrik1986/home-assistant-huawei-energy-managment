@@ -34,11 +34,11 @@
             {% set supercheap_charge = state_attr('sensor.battery_charge_energy_1a_2','supercheap_charge') | float(0) %} 
 
             {% set solar_diff = [estimated_energy_sun_interval - estimated_solar_energy , 0] | max %}
-            {% set raw_total = (estimated_energy_no_sun_interval + solar_diff + buffer + supercheap_charge) - battery_capacity %}
+            {% set raw_total = (estimated_energy_no_sun_interval + solar_diff + buffer) - battery_capacity %}
             {% set total_energy_need = [raw_total, 0] | max %}
 
 
-            {{ total_energy_need  | round(2) }}
+            {{ (total_energy_need + supercheap_charge) | round(2) }}
       attributes:
             search_interval: >
                   {% set raw_start = states('sensor.battery_charge_window_cheapest_1a') %}
@@ -418,11 +418,11 @@
             {% set supercheap_charge = state_attr('sensor.battery_charge_energy_2_1b','supercheap_charge') | float(0) %} 
 
             {% set solar_diff = [estimated_energy_sun_interval - estimated_solar_energy , 0] | max %}
-            {% set raw_total = (estimated_energy_no_sun_interval + solar_diff + buffer + supercheap_charge) - battery_capacity %}
+            {% set raw_total = (estimated_energy_no_sun_interval + solar_diff + buffer) - battery_capacity %}
             {% set total_energy_need = [raw_total, 0] | max %}
 
 
-            {{ total_energy_need  | round(2) }}
+            {{ (total_energy_need + supercheap_charge) | round(2) }}
       attributes:
             search_interval: >
                   {% set raw_start = states('sensor.battery_charge_window_cheapest_2') %}
