@@ -6,6 +6,7 @@ Code examples for Home Assistant energy management. Focus on optimizing self-con
 
 > [!IMPORTANT]
 > You have du adjust the code to your setup.
+> The setup works with 15' prices
 
 ### Introduction 
 The smart charging logic search for cheap charging intervals when new electricity prices are published. Then it calculates how much energy is needed between the charging intervalls. A solar forecast is included to increase self-sufficiency. If solar power isn’t enough and the price is very low (set in the UI), the battery charges extra from the grid. If prices are high now but low at the next charging window, any surplus will be sold.
