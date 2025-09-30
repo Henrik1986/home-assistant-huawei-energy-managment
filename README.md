@@ -7,6 +7,7 @@ Code examples for Home Assistant energy management. Focus on optimizing self-con
 > [!IMPORTANT]
 > You have du adjust the code to your setup.
 
+> [!NOTE]
 > The setup works with 15' prices
 
 ### Introduction 
