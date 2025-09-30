@@ -1,0 +1,25 @@
+alias: Batteri - Styr export baserat på elpris
+description: Stoppar export vid pris ≤ 0, tillåter full effekt annars, med möjlighet att inaktivera
+trigger:
+  - platform: state
+    entity_id: sensor.YOUR_NORDPOOL_SENSOR
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: input_boolean.export_limit_active
+            state: 'on'
+          - condition: template
+            value_template: >
+              {{ states('sensor.YOUR_NORDPOOL_SENSOR') | float(9999) <= 0 }}
+        sequence:
+          - service: huawei_solar.set_maximum_feed_grid_power
+            data:
+              power: "300"
+              device_id: YOUR_ID
+    default:
+      - service: huawei_solar.reset_maximum_feed_grid_power
+        data:
+          device_id: YOUR_ID
+mode: single
