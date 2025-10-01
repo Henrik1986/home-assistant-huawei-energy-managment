@@ -13,8 +13,8 @@ cards:
           offset: +0H
         header:
           title: Spotpris 48h ink moms
-          show: false
-          show_states: true
+          show: true
+          show_states: false
           colorize_states: true
         hours_12: false
         stacked: false
@@ -274,34 +274,11 @@ cards:
   - square: false
     type: grid
     cards:
-      - type: vertical-stack
-        cards:
-          - type: custom:vertical-stack-in-card
-            cards:
-              - type: heading
-                icon: mdi:home-battery
-                heading: Energilagring
-                heading_style: title
-              - type: entities
-                entities:
-                  - entity: input_number.battery_total_capacity_kwh
-                    name: Total kapacitet
-                    icon: mdi:battery
-              - type: markdown
-                content: >-
-                  <ha-icon icon="mdi:information-outline"></ha-icon>
-                  <b>Information</b>
-
-                  <i>Välj den totala lagringskapaciteten. Detta används för att
-                  beräkna laddningsnivåer.</i>
-                text_only: true
-        view_layout:
-          position: sidebar
       - type: custom:vertical-stack-in-card
         cards:
           - type: heading
             icon: mdi:battery-charging
-            heading: Smart laddning
+            heading: Ladda
             heading_style: title
           - type: entities
             entities:
@@ -340,7 +317,7 @@ cards:
         cards:
           - type: heading
             icon: mdi:transmission-tower-export
-            heading: Sälj överskott
+            heading: Sälja
             heading_style: title
           - type: entities
             entities:
@@ -370,32 +347,113 @@ cards:
 
 
               </i>
-    columns: 3
+    columns: 2
+  - type: custom:vertical-stack-in-card
+    cards:
+      - type: custom:stack-in-card
+        mode: horizontal
+        cards:
+          - clock_style: analog
+            clock_size: small
+            show_seconds: true
+            no_background: false
+            border: false
+            ticks: hour
+            type: clock
+          - show_current: false
+            show_forecast: true
+            type: weather-forecast
+            entity: weather.smhi_klagshamn
+            forecast_type: daily
+            name: Klagshamn
+            forecast_slots: 3
+    view_layout:
+      position: sidebar
   - type: custom:vertical-stack-in-card
     cards:
       - type: heading
-        icon: mdi:home-battery
-        heading: Batteri
+        icon: mdi:cog
         heading_style: title
-      - type: tile
-        entity: sensor.batteries_state_of_capacity
-        features_position: bottom
+        heading: Kontrollpanel
+      - features:
+          - type: numeric-input
+            style: buttons
+        type: tile
+        entity: input_number.battery_total_capacity_kwh
+        features_position: inline
         vertical: false
-        name: Laddningsnivå
-      - type: tile
+        name: Total kapacitet
+        icon: mdi:battery
+        hide_state: true
+      - type: markdown
+        content: >-
+          <ha-icon icon="mdi:information-outline"></ha-icon> <b>Information</b>
+
+          <i>Välj den totala lagringskapaciteten. Detta används för att beräkna
+          laddningsnivåer.</i>
+        text_only: true
+      - features:
+          - type: bar-gauge
+        type: tile
+        entity: sensor.batteries_state_of_capacity
+        features_position: inline
+        vertical: false
+        name: Batterinivå
+        tap_action:
+          action: none
+        icon: mdi:home-battery
+        show_entity_picture: false
+        hide_state: false
+      - features:
+          - type: trend-graph
+        type: tile
         entity: sensor.batteries_charge_discharge_power
         features_position: bottom
         vertical: false
-        name: Effekt
+        name: Batterieffekt
         icon: mdi:flash
+        tap_action:
+          action: none
+        icon_tap_action:
+          action: none
       - features:
           - type: select-options
         type: tile
         entity: select.batteries_working_mode
+        features_position: inline
+        vertical: false
+        hide_state: true
+        icon: mdi:auto-mode
+        name: Arbetsläge batteri
+        tap_action:
+          action: none
+      - features:
+          - type: trend-graph
+        type: tile
         features_position: bottom
         vertical: false
-        name: Läge
+        entity: sensor.input_power_with_efficiency_loss_kw
+        name: Solceller
+        icon: mdi:solar-panel
+        color: primary
+      - features:
+          - type: toggle
+        type: tile
+        entity: input_boolean.export_limit_active
+        features_position: inline
+        vertical: false
+        icon: mdi:transmission-tower-off
         hide_state: true
-        icon: mdi:dots-hexagon
+        tap_action:
+          action: toggle
+        color: accent
+        name: "Ingen export "
+      - type: markdown
+        content: >-
+          <ha-icon icon="mdi:information-outline"></ha-icon> <b>Information</b>
+
+          <i>Begränsar export av överskottet från solcellerna om elpriset är
+          negativt.</i>
+        text_only: true
     view_layout:
       position: sidebar
