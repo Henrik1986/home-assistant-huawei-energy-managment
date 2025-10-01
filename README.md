@@ -8,14 +8,14 @@ Code examples for Home Assistant energy management. Focus on optimizing self-con
 > You have du adjust the code to your setup.
 
 > [!NOTE]
-> The setup works with 15' prices
+> The system is currently being tested with 15-minute electricity price intervals.
 
 ### Introduction 
 The smart charging logic search for cheap charging intervals when new electricity prices are published. Then it calculates how much energy is needed between the charging intervalls. A solar forecast is included to increase self-sufficiency. If solar power isn’t enough and the price is very low (set in the UI), the battery charges extra from the grid. If prices are high now but low at the next charging window, any surplus will be sold.
 
 💥 BONUS! 
 - Battery discharge can be limited to only cover the home’s demand, which is useful when charging an EV (battery_luna_2000_S1_ev_protection.yaml in dictionary automations)
-- (WORKING ON IT) Automation that limits solar power export when the electricity price is zero or lower (battery_luna_2000_S1_solar_export.yaml in dictionary automations)
+- Automation that limits solar power export when the electricity price is zero or lower (battery_luna_2000_S1_solar_export.yaml in dictionary automations)
 
 <img width="1825" height="705" alt="Skärmbild 2025-09-20 222116" src="https://github.com/user-attachments/assets/df56b8dd-9570-4b43-a28f-6370251f41a5" />
 _Bilden ovan visar adminvyn via Home Assistant_
