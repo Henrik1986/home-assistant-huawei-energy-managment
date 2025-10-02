@@ -280,17 +280,47 @@ cards:
             icon: mdi:battery-charging
             heading: Ladda
             heading_style: title
-          - type: entities
-            entities:
-              - entity: input_number.battery_charge_duration_hours
-                name: Tid
-                icon: mdi:battery-clock
-              - entity: input_number.battery_buffer_kwh
-                name: Buffert
-                icon: mdi:battery-20
-              - entity: input_number.price_limit_supercheap
-                name: Superbilligt
-                icon: mdi:chart-bar
+          - features:
+              - type: numeric-input
+                style: buttons
+            type: tile
+            entity: input_number.battery_charge_duration_hours
+            features_position: inline
+            vertical: false
+            name: Tid
+            icon: mdi:battery-clock
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
+          - features:
+              - type: numeric-input
+                style: buttons
+            type: tile
+            entity: input_number.battery_buffer_kwh
+            features_position: inline
+            vertical: false
+            name: Buffert
+            icon: mdi:battery-20
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
+            hide_state: true
+          - features:
+              - type: numeric-input
+                style: buttons
+            type: tile
+            features_position: inline
+            vertical: false
+            name: Superbilligt
+            icon: mdi:chart-bar
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
+            entity: input_number.price_limit_supercheap
+            hide_state: true
           - type: markdown
             content: >
               <ha-icon icon="mdi:information-outline"></ha-icon>
@@ -299,11 +329,10 @@ cards:
 
               <i>Tid anger hur långa laddningsfönster som ska sökas upp. 
 
-              Buffert lägger till extra kWh i energiberäkningen.
 
-
-              - Ett högre buffertvärde höjer miniminivån för batteriladdningen
-              medan ett lägre buffertvärde sänker nivån.
+              Buffert lägger till extra kWh i energiberäkningen. Ett högre
+              buffertvärde höjer miniminivån för batteriladdningen medan ett
+              lägre buffertvärde sänker nivån.
 
 
               Superbilligt anger vad som är superbilligt elpris. Styr om
@@ -319,14 +348,34 @@ cards:
             icon: mdi:transmission-tower-export
             heading: Sälja
             heading_style: title
-          - type: entities
-            entities:
-              - entity: input_number.expensive_electricity
-                name: Säljgräns
-                icon: mdi:chart-bar
-              - entity: input_number.battery_charge_price
-                name: Laddgräns
-                icon: mdi:chart-bar
+          - type: tile
+            entity: input_number.expensive_electricity
+            features_position: inline
+            vertical: false
+            name: Säljgräns
+            icon: mdi:chart-areaspline-variant
+            hide_state: true
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
+            features:
+              - type: numeric-input
+                style: buttons
+          - features:
+              - type: numeric-input
+                style: buttons
+            type: tile
+            entity: input_number.battery_charge_price
+            features_position: inline
+            vertical: false
+            name: Säljgräns
+            icon: mdi:chart-areaspline-variant
+            hide_state: true
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
           - type: markdown
             content: >-
               <ha-icon icon="mdi:information-outline"></ha-icon>
@@ -334,47 +383,47 @@ cards:
 
               <i>
 
-              - Säljgräns: Bestämmer hur dyr elen måste vara för att batteriet
-              ska sälja el.
+              Säljgräns: Bestämmer hur dyr elen måste vara för att batteriet ska
+              sälja el.
 
-              - Laddgräns: Sätter gränsen för elpriset vid nästa
+
+              Laddgräns: Sätter gränsen för elpriset vid nästa
               laddningstillfälle. Detta förhindrar att el säljs till ett högt
               pris och sedan laddas tillbaka till ett olönsamt pris.
 
 
-              OBS! Alla gränsvärden måste uppfyllas för att el ska säljas från
-              batteriet.
-
+              <b>OBS!</b> Alla gränsvärden måste uppfyllas för att el ska säljas
+              från batteriet. Ananrs kommer egenförbrukning prioteras
 
               </i>
     columns: 2
-  - type: custom:vertical-stack-in-card
-    cards:
-      - type: custom:stack-in-card
-        mode: horizontal
-        cards:
-          - clock_style: analog
-            clock_size: small
-            show_seconds: true
-            no_background: false
-            border: false
-            ticks: hour
-            type: clock
-          - show_current: false
-            show_forecast: true
-            type: weather-forecast
-            entity: weather.smhi_klagshamn
-            forecast_type: daily
-            name: Klagshamn
-            forecast_slots: 3
-    view_layout:
-      position: sidebar
   - type: custom:vertical-stack-in-card
     cards:
       - type: heading
         icon: mdi:cog
         heading_style: title
         heading: Kontrollpanel
+      - type: custom:vertical-stack-in-card
+        cards:
+          - type: custom:stack-in-card
+            mode: horizontal
+            cards:
+              - clock_style: analog
+                clock_size: small
+                show_seconds: true
+                no_background: false
+                border: false
+                ticks: hour
+                type: clock
+              - show_current: false
+                show_forecast: true
+                type: weather-forecast
+                entity: weather.smhi_klagshamn
+                forecast_type: daily
+                name: Klagshamn
+                forecast_slots: 3
+        view_layout:
+          position: sidebar
       - features:
           - type: numeric-input
             style: buttons
@@ -385,18 +434,11 @@ cards:
         name: Total kapacitet
         icon: mdi:battery
         hide_state: true
-      - type: markdown
-        content: >-
-          <ha-icon icon="mdi:information-outline"></ha-icon> <b>Information</b>
-
-          <i>Välj den totala lagringskapaciteten. Detta används för att beräkna
-          laddningsnivåer.</i>
-        text_only: true
       - features:
-          - type: bar-gauge
+          - type: trend-graph
         type: tile
         entity: sensor.batteries_state_of_capacity
-        features_position: inline
+        features_position: bottom
         vertical: false
         name: Batterinivå
         tap_action:
@@ -404,18 +446,20 @@ cards:
         icon: mdi:home-battery
         show_entity_picture: false
         hide_state: false
+        color: indigo
       - features:
           - type: trend-graph
         type: tile
         entity: sensor.batteries_charge_discharge_power
-        features_position: bottom
+        features_position: inline
         vertical: false
         name: Batterieffekt
-        icon: mdi:flash
+        icon: mdi:battery-charging-100
         tap_action:
           action: none
         icon_tap_action:
           action: none
+        color: indigo
       - features:
           - type: select-options
         type: tile
@@ -427,15 +471,32 @@ cards:
         name: Arbetsläge batteri
         tap_action:
           action: none
+        color: indigo
       - features:
           - type: trend-graph
         type: tile
-        features_position: bottom
+        entity: sensor.power_meter_active_power
+        features_position: inline
+        vertical: false
+        name: Smartmätare
+        tap_action:
+          action: none
+        icon_tap_action:
+          action: none
+        color: red
+      - features:
+          - type: trend-graph
+        type: tile
+        features_position: inline
         vertical: false
         entity: sensor.input_power_with_efficiency_loss_kw
         name: Solceller
         icon: mdi:solar-panel
         color: primary
+        tap_action:
+          action: none
+        icon_tap_action:
+          action: none
       - features:
           - type: toggle
         type: tile
@@ -446,14 +507,14 @@ cards:
         hide_state: true
         tap_action:
           action: toggle
-        color: accent
+        color: green
         name: "Ingen export "
       - type: markdown
         content: >-
-          <ha-icon icon="mdi:information-outline"></ha-icon> <b>Information</b>
+          <b>Information</b>
 
-          <i>Begränsar export av överskottet från solcellerna om elpriset är
-          negativt.</i>
+          <i>Aktivera om du vill begränsa export av överskottet från solcellerna
+          om elpriset är negativt.</i>
         text_only: true
     view_layout:
       position: sidebar
