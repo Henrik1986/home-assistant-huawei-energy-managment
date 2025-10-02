@@ -1,4 +1,4 @@
-alias: "Batteri – Hämtar nya laddningsintervall"
+alias: "Batteri – Uppdaterar den smarta laddningen när nya elpriser kommer"
 mode: single
 trigger:
   - platform: state
