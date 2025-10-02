@@ -369,7 +369,7 @@ cards:
             entity: input_number.battery_charge_price
             features_position: inline
             vertical: false
-            name: Säljgräns
+            name: Laddgräns
             icon: mdi:chart-areaspline-variant
             hide_state: true
             tap_action:
