@@ -17,7 +17,7 @@ The smart charging logic search for cheap charging intervals when new electricit
 - Battery discharge can be limited to only cover the home’s demand, which is useful when charging an EV (battery_luna_2000_S1_ev_protection.yaml in dictionary automations)
 - Automation that limits solar power export when the electricity price is zero or lower (battery_luna_2000_S1_solar_export.yaml in dictionary automations)
 
-<img width="1856" height="713" alt="Skärmbild 2025-10-02 214150" src="https://github.com/user-attachments/assets/d5c00aa6-3026-4dcc-afa7-3d220073c9e6" />
+<img width="1843" height="721" alt="Skärmbild 2025-10-02 214845" src="https://github.com/user-attachments/assets/725a3777-72de-4aa1-b333-62a7dfeab2db" />
 Bilden ovan visar adminvyn via Home Assistant
 
 
