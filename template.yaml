@@ -172,35 +172,34 @@
                   {% set interval_raw = states('sensor.battery_charge_window_cheapest_1a') %}
                   {% set avg_price = 99 %}
                   {% if interval_raw and ' - ' in interval_raw %}
-                            {% set start_dt = as_datetime(interval_raw.split(' - ')[0]) %}
-                            {% set end_dt = as_datetime(interval_raw.split(' - ')[1]) %}
-                            {% set raw_today = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_today') or [] %}
-                            {% set raw_tomorrow = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_tomorrow') or [] %}
-                            {% set tomorrow_valid = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','tomorrow_valid') == true %}
-                            {% set ns = namespace(total=0.0, count=0) %}
+                  {% set start_dt = as_datetime(interval_raw.split(' - ')[0]) %}
+                  {% set end_dt = as_datetime(interval_raw.split(' - ')[1]) %}
+                  {% set raw_today = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_today') or [] %}
+                  {% set raw_tomorrow = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_tomorrow') or [] %}
+                  {% set tomorrow_valid = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','tomorrow_valid') == true %}
+                  {% set ns = namespace(total=0.0, count=0) %}
 
-                            {# Räkna antal kvartal i intervallet #}
-                            {% set quarters = ((end_dt - start_dt).total_seconds() // 900) | int %}
+                  {% set quarters = ((end_dt - start_dt).total_seconds() // 900) | int %}
 
-                            {% for i in range(quarters) %}
-                                              {% set t = start_dt + timedelta(minutes=i*15) %}
-                                              {% set index = t.hour*4 + (t.minute // 15) %}
-                                              {% if t.date() == now().date() %}
-                                                                {% set p = raw_today[index].value if raw_today|length > index else None %}
-                                              {% elif tomorrow_valid and t.date() == (now().date() + timedelta(days=1)) %}
-                                                                {% set p = raw_tomorrow[index].value if raw_tomorrow|length > index else None %}
-                                              {% else %}
-                                                                {% set p = None %}
-                                              {% endif %}
-                                              {% if p is not none %}
-                                                                {% set ns.total = ns.total + (p|string|replace(',','.')|float(0)) %}
-                                                                {% set ns.count = ns.count + 1 %}
-                                              {% endif %}
-                            {% endfor %}
+                  {% for i in range(quarters) %}
+                  {% set t = start_dt + timedelta(minutes=i*15) %}
+                  {% set index = t.hour*4 + (t.minute // 15) %}
+                  {% if t.date() == now().date() %}
+                  {% set p = raw_today[index].value if raw_today|length > index else None %}
+                  {% elif tomorrow_valid and t.date() == (now().date() + timedelta(days=1)) %}
+                  {% set p = raw_tomorrow[index].value if raw_tomorrow|length > index else None %}
+                  {% else %}
+                  {% set p = None %}
+                  {% endif %}
+                  {% if p is not none %}
+                  {% set ns.total = ns.total + (p|string|replace(',','.')|float(0)) %}
+                  {% set ns.count = ns.count + 1 %}
+                  {% endif %}
+                  {% endfor %}
 
-                            {% if ns.count > 0 %}
-                                              {% set avg_price = ns.total / ns.count %}
-                            {% endif %}
+                  {% if ns.count > 0 %}
+                  {% set avg_price = ns.total / ns.count %}
+                  {% endif %}
                   {% endif %}
 
                   {# --- Värden för beräkningen --- #}
@@ -208,28 +207,22 @@
                   {% set battery_capacity = state_attr('sensor.battery_charge_energy_1a_2','battery_capacity') | float(0) %}
                   {% set usable_capacity = state_attr('sensor.battery_charge_energy_1a_2','usable_capacity') | float(0) %}
                   {% set soc = states('sensor.batteries_state_of_capacity') | float(0) %}
-                  {% set max_buffer_pct = 0.50 %}   {# buffert (%) vid mycket låg SoC #}
-                  {% set min_buffer_pct = 0.05 %}   {# buffert (%) vid hög SoC #}
+                  {% set max_buffer_pct = 0.50 %}
+                  {% set min_buffer_pct = 0.05 %}
 
                   {# --- Beräkning av extra kWh vid superbilligt --- #}
                   {% if soc < 80 %}
-                            {% set buffer_pct = min_buffer_pct + (max_buffer_pct - min_buffer_pct) * (1 - soc/80) %}
-                            {% set buffer_kwh = usable_capacity * buffer_pct %}
+                  {% set buffer_pct = min_buffer_pct + (max_buffer_pct - min_buffer_pct) * (1 - soc/80) %}
+                  {% set buffer_kwh = usable_capacity * buffer_pct %}
                   {% else %}
-                            {% set buffer_kwh = 0 %}
+                  {% set buffer_kwh = 0 %}
                   {% endif %}
 
-                  {% set needed_energy = states('sensor.battery_charge_energy_1a_2') | float(0) %}
-                  {% set total_need = buffer_kwh %}
-
-                  {% if avg_price >= price_limit_supercheap %}
-                            0
+                  {# --- Returnera kWh att ladda vid superbilligt pris --- #}
+                  {% if avg_price < price_limit_supercheap %}
+                  {{ buffer_kwh | round(2) }}
                   {% else %}
-                            {% if needed_energy > 0 %}
-                                              {{ total_need | round(2) }}
-                            {% else %}
-                                              0
-                            {% endif %}
+                  0
                   {% endif %}
             price_limit_supercheap: >
                   {% set buffer = states('input_number.price_limit_supercheap') | float(0) %}
@@ -542,35 +535,34 @@
                   {% set interval_raw = states('sensor.battery_charge_window_cheapest_2') %}
                   {% set avg_price = 99 %}
                   {% if interval_raw and ' - ' in interval_raw %}
-                            {% set start_dt = as_datetime(interval_raw.split(' - ')[0]) %}
-                            {% set end_dt = as_datetime(interval_raw.split(' - ')[1]) %}
-                            {% set raw_today = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_today') or [] %}
-                            {% set raw_tomorrow = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_tomorrow') or [] %}
-                            {% set tomorrow_valid = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','tomorrow_valid') == true %}
-                            {% set ns = namespace(total=0.0, count=0) %}
+                  {% set start_dt = as_datetime(interval_raw.split(' - ')[0]) %}
+                  {% set end_dt = as_datetime(interval_raw.split(' - ')[1]) %}
+                  {% set raw_today = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_today') or [] %}
+                  {% set raw_tomorrow = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_tomorrow') or [] %}
+                  {% set tomorrow_valid = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','tomorrow_valid') == true %}
+                  {% set ns = namespace(total=0.0, count=0) %}
 
-                            {# Räkna antal kvartal i intervallet #}
-                            {% set quarters = ((end_dt - start_dt).total_seconds() // 900) | int %}
+                  {% set quarters = ((end_dt - start_dt).total_seconds() // 900) | int %}
 
-                            {% for i in range(quarters) %}
-                                              {% set t = start_dt + timedelta(minutes=i*15) %}
-                                              {% set index = t.hour*4 + (t.minute // 15) %}
-                                              {% if t.date() == now().date() %}
-                                                                {% set p = raw_today[index].value if raw_today|length > index else None %}
-                                              {% elif tomorrow_valid and t.date() == (now().date() + timedelta(days=1)) %}
-                                                                {% set p = raw_tomorrow[index].value if raw_tomorrow|length > index else None %}
-                                              {% else %}
-                                                                {% set p = None %}
-                                              {% endif %}
-                                              {% if p is not none %}
-                                                                {% set ns.total = ns.total + (p|string|replace(',','.')|float(0)) %}
-                                                                {% set ns.count = ns.count + 1 %}
-                                              {% endif %}
-                            {% endfor %}
+                  {% for i in range(quarters) %}
+                  {% set t = start_dt + timedelta(minutes=i*15) %}
+                  {% set index = t.hour*4 + (t.minute // 15) %}
+                  {% if t.date() == now().date() %}
+                  {% set p = raw_today[index].value if raw_today|length > index else None %}
+                  {% elif tomorrow_valid and t.date() == (now().date() + timedelta(days=1)) %}
+                  {% set p = raw_tomorrow[index].value if raw_tomorrow|length > index else None %}
+                  {% else %}
+                  {% set p = None %}
+                  {% endif %}
+                  {% if p is not none %}
+                  {% set ns.total = ns.total + (p|string|replace(',','.')|float(0)) %}
+                  {% set ns.count = ns.count + 1 %}
+                  {% endif %}
+                  {% endfor %}
 
-                            {% if ns.count > 0 %}
-                                              {% set avg_price = ns.total / ns.count %}
-                            {% endif %}
+                  {% if ns.count > 0 %}
+                  {% set avg_price = ns.total / ns.count %}
+                  {% endif %}
                   {% endif %}
 
                   {# --- Värden för beräkningen --- #}
@@ -578,28 +570,22 @@
                   {% set battery_capacity = state_attr('sensor.battery_charge_energy_2_1b','battery_capacity') | float(0) %}
                   {% set usable_capacity = state_attr('sensor.battery_charge_energy_2_1b','usable_capacity') | float(0) %}
                   {% set soc = states('sensor.batteries_state_of_capacity') | float(0) %}
-                  {% set max_buffer_pct = 0.50 %}   {# buffert (%) vid mycket låg SoC #}
-                  {% set min_buffer_pct = 0.05 %}   {# buffert (%) vid hög SoC #}
+                  {% set max_buffer_pct = 0.50 %}
+                  {% set min_buffer_pct = 0.05 %}
 
                   {# --- Beräkning av extra kWh vid superbilligt --- #}
                   {% if soc < 80 %}
-                            {% set buffer_pct = min_buffer_pct + (max_buffer_pct - min_buffer_pct) * (1 - soc/80) %}
-                            {% set buffer_kwh = usable_capacity * buffer_pct %}
+                  {% set buffer_pct = min_buffer_pct + (max_buffer_pct - min_buffer_pct) * (1 - soc/80) %}
+                  {% set buffer_kwh = usable_capacity * buffer_pct %}
                   {% else %}
-                            {% set buffer_kwh = 0 %}
+                  {% set buffer_kwh = 0 %}
                   {% endif %}
 
-                  {% set needed_energy = states('sensor.battery_charge_energy_2_1b') | float(0) %}
-                  {% set total_need = buffer_kwh %}
-
-                  {% if avg_price >= price_limit_supercheap %}
-                            0
+                  {# --- Returnera kWh att ladda vid superbilligt pris --- #}
+                  {% if avg_price < price_limit_supercheap %}
+                  {{ buffer_kwh | round(2) }}
                   {% else %}
-                            {% if needed_energy > 0 %}
-                                              {{ total_need | round(2) }}
-                            {% else %}
-                                              0
-                            {% endif %}
+                  0
                   {% endif %}
             price_limit_supercheap: >
                   {% set buffer = states('input_number.price_limit_supercheap') | float(0) %}
