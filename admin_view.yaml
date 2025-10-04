@@ -4,273 +4,283 @@ title: TEST
 cards:
   - type: custom:vertical-stack-in-card
     cards:
-      - type: custom:apexcharts-card
-        update_interval: 5 min
-        graph_span: 48h
-        cache: false
-        span:
-          start: day
-          offset: +0H
-        header:
-          title: Spotpris 48h ink moms
-          show: true
-          show_states: false
-          colorize_states: true
-        hours_12: false
-        stacked: false
-        experimental:
-          color_threshold: true
-        yaxis:
-          - id: spotpris
-            opposite: false
-            show: true
-            decimals: 1
-            min: 0
+      - type: custom:vertical-stack-in-card
+        cards:
+          - type: heading
+            icon: mdi:chart-areaspline
+            heading: Spotpris 48h ink moms
+            heading_style: title
+          - type: custom:apexcharts-card
+            update_interval: 5 min
+            graph_span: 48h
+            cache: false
+            span:
+              start: day
+              offset: +0H
+            header:
+              title: Spotpris 48h ink moms
+              show: false
+              show_states: false
+              colorize_states: true
+            hours_12: false
+            stacked: false
+            experimental:
+              color_threshold: true
+            yaxis:
+              - id: spotpris
+                opposite: false
+                show: true
+                decimals: 1
+                min: 0
+                apex_config:
+                  title:
+                    text: Elpris (SEK/kWh)
+              - id: battery
+                opposite: true
+                show: true
+                decimals: 0
+                max: 100
+                min: 0
+                apex_config:
+                  title:
+                    text: Batterinivå (%)
+              - id: import
+                opposite: true
+                show: false
+                min: 0
+                decimals: 1
+                apex_config:
+                  title:
+                    text: Energi (kWh)
+              - id: export
+                opposite: true
+                show: true
+                decimals: 1
+                apex_config:
+                  title:
+                    text: Energi (kWh)
+              - id: solar_power
+                opposite: true
+                show: false
+              - id: charge/expensive
+                opposite: true
+                show: false
             apex_config:
-              title:
-                text: Elpris (SEK/kWh)
-          - id: battery
-            opposite: true
-            show: true
-            decimals: 0
-            max: 100
-            min: 0
-            apex_config:
-              title:
-                text: Batterinivå (%)
-          - id: import
-            opposite: true
-            show: false
-            min: 0
-            decimals: 1
-            apex_config:
-              title:
-                text: Energi (kWh)
-          - id: export
-            opposite: true
-            show: true
-            decimals: 1
-            apex_config:
-              title:
-                text: Energi (kWh)
-          - id: solar_power
-            opposite: true
-            show: false
-          - id: charge/expensive
-            opposite: true
-            show: false
-        apex_config:
-          chart:
-            height: 255
-            animations:
-              enabled: true
-              easing: easeinout
-              speed: 800
-              animateGradually:
-                enabled: true
-                delay: 150
-          legend:
-            show: true
-            floating: false
-            offsetY: 5
-            position: bottom
-            fontSize: 10px
-          tooltip:
-            enabled: false
-          xaxis:
-            labels:
+              chart:
+                height: 255
+                animations:
+                  enabled: true
+                  easing: easeinout
+                  speed: 800
+                  animateGradually:
+                    enabled: true
+                    delay: 150
+              legend:
+                show: true
+                floating: false
+                offsetY: 5
+                position: bottom
+                fontSize: 10px
+              tooltip:
+                enabled: false
+              xaxis:
+                labels:
+                  show: true
+                  rotate: 0
+                  rotateAlways: true
+                  logarithmic: false
+              stroke:
+                width: 1
+              plotOptions:
+                candlestick:
+                  colors:
+                    upward: "#00B746"
+                    downward: "#EF403C"
+                  wick:
+                    useFillColor: true
+            all_series_config:
+              show:
+                legend_value: false
+                datalabels: false
+                in_brush: false
+              float_precision: 3
+              invert: false
+              fill_raw: last
+            now:
               show: true
-              rotate: 0
-              rotateAlways: true
-              logarithmic: false
-          stroke:
-            width: 1
-          plotOptions:
-            candlestick:
-              colors:
-                upward: "#00B746"
-                downward: "#EF403C"
-              wick:
-                useFillColor: true
-        all_series_config:
-          show:
-            legend_value: false
-            datalabels: false
-            in_brush: false
-          float_precision: 3
-          invert: false
-          fill_raw: last
-        now:
-          show: true
-          label: NU
-          color: red
-        series:
-          - entity: sensor.solar_forecast_west
-            yaxis_id: solar_power
-            data_generator: |
-              return entity.attributes.west.watts.map((entry) => {
-                return [new Date(entry.date), entry.values / 1000]; // Konvertera till kWh
-              });
-            name: Solel
-            type: area
-            color: orange
-            opacity: 0.7
-            stroke_width: 3
-            color_threshold:
-              - value: 0
-                color: "#fff9c4"
-              - value: 5
-                color: "#ffeb3b"
-              - value: 15
-                color: "#fbc02d"
-          - entity: sensor.nordpool_kwh_se4_sek_1_10_0
-            yaxis_id: spotpris
-            type: area
-            name: Idag
-            opacity: 0.7
-            color: grey
-            extend_to: false
-            data_generator: |
-              const data = entity.attributes.raw_today.map((start, index) => {
-                return [new Date(start["start"]).getTime(), start["value"]];
-              });
-              const last = entity.attributes.raw_today.slice(-1)[0];
-              const lastTime = new Date(last["start"]).getTime();
-              data.push([lastTime + 3600000, last["value"]]); // 
-              return data;
-            color_threshold:
-              - value: -1
-                color: 1E90FF
-              - value: 0.5
-                color: "008000"
-              - value: 1
-                color: DAA520
-              - value: 2
-                color: FF0000
-            show:
-              legend_value: false
-              datalabels: false
-              extremas: true
-              in_brush: false
-              in_legend: false
-          - entity: sensor.nordpool_kwh_se4_sek_1_10_0
-            yaxis_id: spotpris
-            name: Imorgon
-            type: area
-            opacity: 0.7
-            color: grey
-            data_generator: >
-              const data = entity.attributes.raw_tomorrow.map((start, index) =>
-              {
-                return [new Date(start["start"]).getTime(), start["value"]];
-              });
+              label: NU
+              color: red
+            series:
+              - entity: sensor.solar_forecast_west
+                yaxis_id: solar_power
+                data_generator: |
+                  return entity.attributes.west.watts.map((entry) => {
+                    return [new Date(entry.date), entry.values / 1000]; // Konvertera till kWh
+                  });
+                name: Solel
+                type: area
+                color: orange
+                opacity: 0.7
+                stroke_width: 3
+                color_threshold:
+                  - value: 0
+                    color: "#fff9c4"
+                  - value: 5
+                    color: "#ffeb3b"
+                  - value: 15
+                    color: "#fbc02d"
+              - entity: sensor.nordpool_kwh_se4_sek_1_10_0
+                yaxis_id: spotpris
+                type: area
+                name: Idag
+                opacity: 0.7
+                color: grey
+                extend_to: false
+                data_generator: >
+                  const data = entity.attributes.raw_today.map((start, index) =>
+                  {
+                    return [new Date(start["start"]).getTime(), start["value"]];
+                  });
 
-              const last = entity.attributes.raw_tomorrow.slice(-1)[0]; const
-              lastTime = new Date(last["start"]).getTime();
+                  const last = entity.attributes.raw_today.slice(-1)[0];
 
-              data.push([lastTime + 3600000, last["value"]]);
+                  const lastTime = new Date(last["start"]).getTime();
 
-              return data;
-            color_threshold:
-              - value: -1
-                color: 1E90FF
-              - value: 0.5
-                color: "008000"
-              - value: 1
-                color: DAA520
-              - value: 2
-                color: FF0000
-            show:
-              legend_value: false
-              datalabels: false
-              extremas: true
-              in_brush: false
-              in_legend: false
-          - entity: sensor.battery_charge_window_cheapest_1a
-            yaxis_id: charge/expensive
-            name: Laddningsfönster
-            opacity: 0.7
-            color: "#00406c"
-            type: area
-            data_generator: |
-              const data = [];
-              const sensorData = entity.state.split(' - ');
-              function parseLocalTime(str) {
-                const parts = str.split(/[- :T]/).map(Number);
-                const date = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]);
-                return date.getTime();
-              }
-              const startTime = parseLocalTime(sensorData[0]);
-              const endTime = parseLocalTime(sensorData[1]);
-              data.push([startTime, 3]);
-              data.push([startTime, 3]);
-              data.push([endTime, 3]);
-              data.push([endTime, 0]);
-              return data;
-            show:
-              legend_value: false
-              datalabels: false
-              extremas: false
-              in_brush: false
-              in_legend: true
-          - entity: sensor.battery_charge_window_cheapest_2
-            yaxis_id: charge/expensive
-            name: Laddning 2
-            opacity: 0.7
-            color: "#00406c"
-            type: area
-            data_generator: |
-              const data = [];
-              const sensorData = entity.state.split(' - ');
-              function parseLocalTime(str) {
-                const parts = str.split(/[- :T]/).map(Number);
-                const date = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]);
-                return date.getTime();
-              }
-              const startTime = parseLocalTime(sensorData[0]);
-              const endTime = parseLocalTime(sensorData[1]);
-              data.push([startTime, 3]);
-              data.push([startTime, 3]);
-              data.push([endTime, 3]);
-              data.push([endTime, 0]);
-              return data;
-            show:
-              legend_value: false
-              datalabels: false
-              extremas: false
-              in_brush: false
-              in_legend: false
-          - entity: sensor.battery_charge_window_cheapest_1b
-            yaxis_id: charge/expensive
-            name: Laddning 3
-            opacity: 0.7
-            color: "#00406c"
-            type: area
-            data_generator: |
-              const data = [];
-              const sensorData = entity.state.split(' - ');
-              function parseLocalTime(str) {
-                const parts = str.split(/[- :T]/).map(Number);
-                const date = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]);
-                return date.getTime();
-              }
-              const startTime = parseLocalTime(sensorData[0]);
-              const endTime = parseLocalTime(sensorData[1]);
-              data.push([startTime, 3]);
-              data.push([startTime, 3]);
-              data.push([endTime, 3]);
-              data.push([endTime, 0]);
-              return data;
-            show:
-              legend_value: false
-              datalabels: false
-              extremas: false
-              in_brush: false
-              in_legend: false
-        view_layout:
-          position: main
-      - type: custom:gap-card
-        height: 5
+                  data.push([lastTime + 3600000, last["value"]]); // 
+
+                  return data;
+                color_threshold:
+                  - value: -1
+                    color: 1E90FF
+                  - value: 0.5
+                    color: "008000"
+                  - value: 1
+                    color: DAA520
+                  - value: 2
+                    color: FF0000
+                show:
+                  legend_value: false
+                  datalabels: false
+                  extremas: true
+                  in_brush: false
+                  in_legend: false
+              - entity: sensor.nordpool_kwh_se4_sek_1_10_0
+                yaxis_id: spotpris
+                name: Imorgon
+                type: area
+                opacity: 0.7
+                color: grey
+                data_generator: >
+                  const data = entity.attributes.raw_tomorrow.map((start, index)
+                  => {
+                    return [new Date(start["start"]).getTime(), start["value"]];
+                  });
+
+                  const last = entity.attributes.raw_tomorrow.slice(-1)[0];
+                  const lastTime = new Date(last["start"]).getTime();
+
+                  data.push([lastTime + 3600000, last["value"]]);
+
+                  return data;
+                color_threshold:
+                  - value: -1
+                    color: 1E90FF
+                  - value: 0.5
+                    color: "008000"
+                  - value: 1
+                    color: DAA520
+                  - value: 2
+                    color: FF0000
+                show:
+                  legend_value: false
+                  datalabels: false
+                  extremas: true
+                  in_brush: false
+                  in_legend: false
+              - entity: sensor.battery_charge_window_cheapest_1a
+                yaxis_id: charge/expensive
+                name: Laddningsfönster 1
+                opacity: 0.7
+                color: "#00406c"
+                type: area
+                data_generator: |
+                  const data = [];
+                  const sensorData = entity.state.split(' - ');
+                  function parseLocalTime(str) {
+                    const parts = str.split(/[- :T]/).map(Number);
+                    const date = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]);
+                    return date.getTime();
+                  }
+                  const startTime = parseLocalTime(sensorData[0]);
+                  const endTime = parseLocalTime(sensorData[1]);
+                  data.push([startTime, 3]);
+                  data.push([startTime, 3]);
+                  data.push([endTime, 3]);
+                  data.push([endTime, 0]);
+                  return data;
+                show:
+                  legend_value: false
+                  datalabels: false
+                  extremas: false
+                  in_brush: false
+                  in_legend: true
+              - entity: sensor.battery_charge_window_cheapest_2
+                yaxis_id: charge/expensive
+                name: Laddningsfönster 2
+                opacity: 0.7
+                color: "#00406c"
+                type: area
+                data_generator: |
+                  const data = [];
+                  const sensorData = entity.state.split(' - ');
+                  function parseLocalTime(str) {
+                    const parts = str.split(/[- :T]/).map(Number);
+                    const date = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]);
+                    return date.getTime();
+                  }
+                  const startTime = parseLocalTime(sensorData[0]);
+                  const endTime = parseLocalTime(sensorData[1]);
+                  data.push([startTime, 3]);
+                  data.push([startTime, 3]);
+                  data.push([endTime, 3]);
+                  data.push([endTime, 0]);
+                  return data;
+                show:
+                  legend_value: false
+                  datalabels: false
+                  extremas: false
+                  in_brush: false
+                  in_legend: true
+              - entity: sensor.battery_charge_window_cheapest_1b
+                yaxis_id: charge/expensive
+                name: Laddning 3
+                opacity: 0.7
+                color: "#00406c"
+                type: area
+                data_generator: |
+                  const data = [];
+                  const sensorData = entity.state.split(' - ');
+                  function parseLocalTime(str) {
+                    const parts = str.split(/[- :T]/).map(Number);
+                    const date = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]);
+                    return date.getTime();
+                  }
+                  const startTime = parseLocalTime(sensorData[0]);
+                  const endTime = parseLocalTime(sensorData[1]);
+                  data.push([startTime, 3]);
+                  data.push([startTime, 3]);
+                  data.push([endTime, 3]);
+                  data.push([endTime, 0]);
+                  return data;
+                show:
+                  legend_value: false
+                  datalabels: false
+                  extremas: false
+                  in_brush: false
+                  in_legend: false
+                  in_chart: false
+            view_layout:
+              position: main
   - square: false
     type: grid
     cards:
@@ -396,7 +406,59 @@ cards:
               från batteriet. Ananrs kommer egenförbrukning prioteras
 
               </i>
-    columns: 2
+      - type: custom:vertical-stack-in-card
+        cards:
+          - type: heading
+            icon: mdi:information
+            heading: Information
+            heading_style: title
+          - type: markdown
+            content: >-
+              <b>Elpris:</b> {{ states('sensor.nordpool_kwh_se4_sek_1_10_0') }}
+              SEK/kWh
+          - type: markdown
+            content: |2-
+                {% set interval = states('sensor.battery_charge_window_cheapest_1a') %}
+                {% set energy = states('sensor.battery_charge_energy_1a_2') %}
+                {% if ' - ' in interval %}
+                  {% set start_str, end_str = interval.split(' - ') %}
+                  {% set start_time = start_str | as_datetime %}
+                  {% set end_time = end_str | as_datetime %}
+                  {% set supercheap = state_attr('sensor.battery_charge_energy_1a_2','supercheap_charge') %}
+                  <b>Laddningsfönster 1</b> 
+                  Tid: {{ start_time.strftime('%H:%M') }} - {{ end_time.strftime('%H:%M') }} 
+                  Beräknad laddning: {{ energy }} kWh
+                  Extra superbillig laddning: {{ supercheap }} kWh
+                  Status: {% if is_state('input_boolean.interval_1a', 'on') %} Aktiv {% else %} Inaktiv {% endif %}
+                {% else %}
+                  Ingen tid tillgänglig  
+                {% endif %}
+          - type: markdown
+            content: |2
+                {% set interval = states('sensor.battery_charge_window_cheapest_2') %}
+                {% set energy = states('sensor.battery_charge_energy_2_1b') %}
+                {% if ' - ' in interval %}
+                  {% set start_str, end_str = interval.split(' - ') %}
+                  {% set start_time = start_str | as_datetime %}
+                  {% set end_time = end_str | as_datetime %}
+                  {% set supercheap = state_attr('sensor.battery_charge_energy_2_1b','supercheap_charge') %}
+                  <b>Laddningsfönster 2</b> 
+                  Tid: {{ start_time.strftime('%H:%M') }} - {{ end_time.strftime('%H:%M') }}  
+                  Beräknad laddning: {{ energy }} kWh
+                  Extra superbillig laddning: {{ supercheap }} kWh
+                  Status: {% if is_state('input_boolean.interval_2', 'on') %} Aktiv {% else %} Inaktiv {% endif %}
+                {% else %}
+                  Ingen tid tillgänglig  
+                {% endif %}
+          - type: markdown
+            content: >-
+              <b>Överskott av solel </b> {% if
+              is_state('input_boolean.max_export_active', 'on') %}
+                 Export EJ tillåten
+                {% else %}
+                 Export tillåten
+                {% endif %}
+    columns: 3
   - type: custom:vertical-stack-in-card
     cards:
       - type: heading
@@ -434,13 +496,14 @@ cards:
         name: Total kapacitet
         icon: mdi:battery
         hide_state: true
+        color: indigo
       - features:
           - type: trend-graph
         type: tile
         entity: sensor.batteries_state_of_capacity
         features_position: bottom
         vertical: false
-        name: Batterinivå
+        name: Laddning
         tap_action:
           action: none
         icon: mdi:home-battery
@@ -453,7 +516,7 @@ cards:
         entity: sensor.batteries_charge_discharge_power
         features_position: inline
         vertical: false
-        name: Batterieffekt
+        name: Batteri
         icon: mdi:battery-charging-100
         tap_action:
           action: none
@@ -468,7 +531,7 @@ cards:
         vertical: false
         hide_state: true
         icon: mdi:auto-mode
-        name: Arbetsläge batteri
+        name: Arbetsläge
         tap_action:
           action: none
         color: indigo
@@ -478,7 +541,7 @@ cards:
         entity: sensor.power_meter_active_power
         features_position: inline
         vertical: false
-        name: Smartmätare
+        name: Elmätare
         tap_action:
           action: none
         icon_tap_action:
@@ -497,6 +560,20 @@ cards:
           action: none
         icon_tap_action:
           action: none
+      - features:
+          - type: toggle
+        type: tile
+        entity: input_boolean.manual_charge
+        features_position: inline
+        vertical: false
+        name: Ladda nu
+        icon: mdi:power-plug-battery
+        hide_state: true
+        tap_action:
+          action: none
+        icon_tap_action:
+          action: none
+        color: green
       - features:
           - type: toggle
         type: tile
