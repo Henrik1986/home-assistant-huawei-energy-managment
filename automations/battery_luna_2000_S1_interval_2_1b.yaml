@@ -6,7 +6,7 @@ mode: single
 
 trigger:
   - platform: time_pattern
-    minutes: "/15"  # Kontroll var 15:e minut
+    minutes: "/10" 
 
 condition:
   - condition: state
@@ -32,41 +32,52 @@ action:
                 {{ start_time <= now_time <= end_time and needed_kwh > 0 }}
               {% endif %}
           - condition: template
-            value_template: "{{ states('select.batteries_working_mode') != 'time_of_use_luna2000' }}" # HINDRAR ONÖDIGA ÄNDRINGAR
+            value_template: "{{ states('select.batteries_working_mode') != 'time_of_use_luna2000' }}" 
         sequence:
+          - service: input_boolean.turn_on
+            target: 
+              entity_id: input_boolean.interval_2 
           - action: huawei_solar.set_tou_periods
             data:
-              device_id: YOUR ID
+              device_id: 3b9da000027a871e418238a41b828eaa
               periods: 00:00-23:59/1234567/+
           - delay: 00:01:00
           - service: select.select_option
             target:
               entity_id: select.batteries_working_mode
             data:
-              option: "time_of_use_luna2000"  # Sätt batteriet i ToU-läge
+              option: "time_of_use_luna2000" 
 
 
       # 2: Standardläge Maximize self-consumption annars
       - conditions:
-          - condition: template
-            value_template: >-
-              {% set needed_kwh = states('sensor.battery_charge_energy_2_1b') | float(0) %}
-              {% set interval_raw = states('sensor.battery_charge_window_cheapest_2') %}
-              {% if ' - ' not in interval_raw %}
-                false
-              {% else %}
-                {% set start_str, end_str = interval_raw.split(' - ') %}
-                {% set start_time = start_str | as_datetime %}
-                {% set end_time = end_str | as_datetime %}
-                {% set now_time = now() %}
-                {{ start_time <= now_time <= end_time and needed_kwh <= 0 }}
-              {% endif %}
-          - condition: template
-            value_template: "{{ states('select.batteries_working_mode') != 'maximise_self_consumption' }}" #HINDRAR ONÖDIGA ÄNDRINGAR
+            - condition: template
+              value_template: >-
+                  {% set needed_kwh = states('sensor.battery_charge_energy_2_1b') | float(0) %}
+                  {% set interval_raw = states('sensor.battery_charge_window_cheapest_2') %}
+                  {% if ' - ' not in interval_raw %}
+                      true
+                  {% else %}
+                      {% set start_str, end_str = interval_raw.split(' - ') %}
+                      {% set start_time = start_str | as_datetime %}
+                      {% set end_time = end_str | as_datetime %}
+                      {% set now_time = now() %}
+                      {{ needed_kwh <= 0 or not (start_time <= now_time <= end_time) }}
+                  {% endif %}
+            - condition: template 
+              value_template: >-
+                  {{ states('select.batteries_working_mode') not in
+                     ['maximise_self_consumption','fully_fed_to_grid'] }} 
+            - condition: state
+              entity_id: input_boolean.interval_2
+              state: 'on'    
         sequence:
-          - service: select.select_option
-            target:
-              entity_id: select.batteries_working_mode
-            data:
-              option: "maximise_self_consumption"  # Standardläge
+            - service: select.select_option
+              target:
+                  entity_id: select.batteries_working_mode
+              data:
+                  option: "maximise_self_consumption"  
+            - service: input_boolean.turn_off
+              target: 
+                  entity_id: input_boolean.interval_2 
 
