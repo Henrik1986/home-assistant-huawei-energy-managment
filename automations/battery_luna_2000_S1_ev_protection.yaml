@@ -5,7 +5,7 @@ trigger:
   - platform: state
     entity_id: sensor.WALLBOX_SENSOR #STATE SENSOR - OPERATION MODE LIKE CHARGING, LOCKED ETC
   - platform: time_pattern
-    minutes: "/15"
+    minutes: "/10"
 
 action:
   - choose:
