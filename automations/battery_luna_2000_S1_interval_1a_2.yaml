@@ -77,3 +77,6 @@ action:
               entity_id: select.batteries_working_mode
             data:
               option: "maximise_self_consumption" 
+          - service: input_boolean.turn_off
+            target: 
+                entity_id: input_boolean.interval_1a 
