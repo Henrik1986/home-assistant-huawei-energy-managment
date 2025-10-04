@@ -1,0 +1,44 @@
+alias: "Batteri – Manuell laddning"
+description: >
+  Aktiverar ToU-laddning när manual_charge slås på.  
+  Återgår till Maximize self-consumption när manual_charge slås av.
+mode: single
+
+trigger:
+  - platform: state
+    entity_id: input_boolean.manual_charge
+    to: "on"
+  - platform: state
+    entity_id: input_boolean.manual_charge
+    to: "off"
+
+action:
+  - choose:
+      # 1: Manual Charge aktiverad → Sätt ToU-läge
+      - conditions:
+          - condition: state
+            entity_id: input_boolean.manual_charge
+            state: "on"
+        sequence:
+          - action: huawei_solar.set_tou_periods
+            data:
+              device_id: YOUR_ID
+              periods: 00:00-23:59/1234567/+  # hela dygnet
+          - delay: 00:01:00
+          - service: select.select_option
+            target:
+              entity_id: select.batteries_working_mode
+            data:
+              option: "time_of_use_luna2000"
+
+      # 2: Manual Charge av → Återgå till Maximize self-consumption
+      - conditions:
+          - condition: state
+            entity_id: input_boolean.manual_charge
+            state: "off"
+        sequence:
+          - service: select.select_option
+            target:
+              entity_id: select.batteries_working_mode
+            data:
+              option: "maximise_self_consumption"
