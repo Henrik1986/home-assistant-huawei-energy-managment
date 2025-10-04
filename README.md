@@ -33,25 +33,27 @@ Bilden ovan visar adminvyn via Home Assistant
 - Wallbox Pulsar Max 
 
 ### Steg 1
-Skapa en template (finns i template.yaml) som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen. Ge den följande namn. 
+- Skapa en template som håller koll på husets aktuella effekt. I min setup valde jag att exkludera laddningen av elbilen. Du hittar den via filen template.yaml och där heter den huseffekt_exl_elbil 
 
-- huseffekt_exl_elbil
-
-Skapa därefter en sensor (finns i sensors.yaml) som ackumulerar kWh som du namnger 
-
-- energy_total_exl_elbil. 
+- Skapa därefter en sensor (finns i sensors.yaml) som ackumulerar kWh som du namnger enligt följande energy_total_exl_elbil. 
 
 > [!IMPORTANT]
 > Min kod förutsätter att du har en smartmätare via Huawei intergrationen samt att du justerat dayily_yail enligt [följande](https://github.com/wlcrs/huawei_solar/wiki/Daily-Solar-Yield#a-better-approach)
 
 > [!NOTE]
-> Om din setup ser ut på annat sätt kan du utgå från koden (se template.yaml) för att skapa en sensor som håller koll på husets aktuella effekt. 
+> Om din setup ser ut på annat sätt kan du utgå från min kod för att skapa en sensor som håller koll på husets aktuella effekt. Kan du inte koda är CHAT-GPT duktig på att justera. 
 
 ### Steg 2
 Skapa SQL-sensorer (finns i mappen sql-sensor) för att följa din energiförbrukning. SQL-sensorer beräknar kWh/h för de senaste 3 dagarna. Antalet dagar går att justera i koden. Skapar SQL-sensorer via [integrationer](https://www.home-assistant.io/integrations/sql/)
-Ange följande + frågan som finns i filerna i mappen sql-sensor
+
+- Namn: Använd samma namn som filen som du hämtar frågan (välj fråga) ifrån
+- Databas URL: INGET
 - Kolumn: avg_kwh_per_hour
+- Välj-fråga: Finns i filerna i mappen sql-sensorer
 - Måttenhet: kWh/h
+- Värdemall: INGET
+- Enhetsklass: INGET
+- Tillståndsklass: INGET
 
 > [!IMPORTANT]
 > Ersätt sensor.energy_total_exl_elbil om du valde något annat namn i steg 1. 
@@ -60,7 +62,9 @@ Ange följande + frågan som finns i filerna i mappen sql-sensor
 Skapa en command line sensor (finns i command_line.yaml) för [solelsprognos](https://forecast.solar/)
 
 > [!IMPORTANT]
-> Ersätt sensor.solar_forecast_west i resten av koden om något annat namn valdes. Mitt råd är att använda ett annat friendly name om du önskar ett annat namn. Detta kommer inte påverka resterande kod
+> Om du ändrar namnet på sensorn måste du justera resten av koden. Mitt råd är att använda ett annat friendly name om du önskar ett annat namn. Detta kommer inte påverka resterande kod
+>
+> I filen comman_line.yaml finns mer information om hur du ställer in solprognosen. 
 
 ### Steg 4
 Skapa tre template sensorer (finns i template.yaml) som söker upp billiga laddningsfönster. Template sensorerna har nedanstående namn i filen template.yaml.
@@ -70,7 +74,9 @@ Skapa tre template sensorer (finns i template.yaml) som söker upp billiga laddn
 - battery_charge_window_cheapest_2
 
 > [!IMPORTANT]
-> Template sensorerna ska ha en egen trigger och lägg in din Nordpool sensor i template koden (min är i SEK/kWh).
+> Template sensorerna ska ha en egen trigger
+> 
+> Lägg in din Nordpool sensor i template koden (min är i SEK/kWh).
 
 ### Steg 5 
 Skapa tre input_number (via helper). Ge dem följande värden:
@@ -101,10 +107,12 @@ Skapa en input_button (via helper) för uppdateringen av laddningsfönster. Knap
 - update_battery_cheapest_charge
 
 ### Steg 7
-Skapa en template sensor (finns i template.yaml) som håller koll på om nya elpriser finns tillgängliga. 
+Skapa en template sensor som håller koll på om nya elpriser finns tillgängliga. Du hittar denna kod i filen template.yaml och koden heter Nordpool Tomorrow Prices Available
 
 > [!IMPORTANT]
-> Template sensorn ska ligger som en binary_sensor under template och lägg till din Nordpool-sensor i koden.
+> Template sensorn ska ligger som en binary_sensor under template
+>
+> Lägg till din Nordpool-sensor i koden.
 
 ### Steg 8 
 Skapa en automation (battery_update_charge_interval.yaml i mappen automations) som styr uppdateringen av laddningsfönsterna. När du gjort detta har du tre laddningsfönster som uppdateras när nya elpriser släpps och som kommer att användas för att ladda batteriet. Sensorernas namn hittar du i steg 4. 
@@ -117,6 +125,12 @@ Skapa två template sensorer (finns i template.yaml) som beräknar energibehovet
 
 > [!IMPORTANT]
 > Observera att koden är lång och att dessa sensorer INTE ska ha en egen trigger.
+>
+> Lägg till din Nordpool-sensor
+>
+> Justera din solprognos (om du ändrade namnet på den)
+>
+> Justera SQL-sensorerna om du ändrade namnet på dem
 
 > [!WARNING]
 > För att sensorerna ska fungera krävs sensor.batteries_state_of_capacity som visar aktuell batterinivå. Du behöver även number.batteries_end_of_discharge_soc som visar lägsta urladdninvsnivå i %. Båda entiterna följer med [Huawei Solar Integration](https://github.com/wlcrs/huawei_solar). Finns inte dessa behöver du justera koden eller din sensorers namn.
@@ -138,27 +152,40 @@ Skapa två automationer som kommer att styra om batteriet ska laddas eller inte.
 - battery_luna_2000_S1_interval_2_1b.yaml
 
 > [!WARNING]
->Automationerna är byggda utifrån [Huawei Solar Integration](https://github.com/wlcrs/huawei_solar) och utifrån batteriet Luna2000 - S1. Om du har en annan setup får du justera automationerna utifrån den. Har du samma setup behöver du bara lägga till ditt device_id. Detta hittar på följande sätt:
-> 
+>Automationerna är byggda utifrån [Huawei Solar Integration](https://github.com/wlcrs/huawei_solar) och utifrån batteriet Luna2000 - S1. Om du har en annan setup kan du behöva justera koden. 
+
+> [!IMPORTANT]
+> Lägg till ditt Huawei device_id i automationerna
+
+> [!NOTE]
+> Du hittar ditt Huawei device_id på följande sätt:
+>
 > Utvecklarverktyg -> Åtgärder -> Klicka på åtgärd -> Skriv huawei -> Välj forcible charge -> Klicka på gå till UI-läge -> Välj Batteries i rullgardinen på raden battery -> Klicka på gå till YAML-läge - Då ska du få fram till device_id
 
 ### Steg 12
 Skapa två input_boolean (via helper) för att inte laddningsautomationerna ska påverka varandra. Ge dem följande namn: 
 - interval_1a
 - interval_2
-  
-### Steg 13
-Skapa en input_boolean (via helper) som avaktiverar samtliga automationer för att kunna ladda manuelt. Ge den med följande namn: 
-- manual_charge
 
 ### Steg 14
+Skapa en automation som kommer att användas för att starta och avslutla laddning manuellt. I mapppen automation heter denna
+- battery_luna_2000_S1_manual_charge.yaml
+
+> [!IMPORTANT]
+> Lägg till ditt Huawei device_id i automationen
+  
+### Steg 15
+Skapa en input_boolean (via helper) som startar/avslutar laddningen manuellt. Ge den med följande namn: 
+- manual_charge
+
+### Steg 16
 Skapa en automation som kommer att styra om batteriet ska sälja om elpriser är högt och kommande elpris är lågt. I mappen automations heter denna
 - battery_luna_2000_S1_discharge.yaml
 
 > [!IMPORTANT]
-> Lägg in din Nordpool-sensor
+> Lägg in din Nordpool-sensor i automationen
 
-### Steg 15
+### Steg 17
 Skapa två input_number (via helper) för att kunna justera gränsvärdena för att sälja överskottet. Ge input_number förljande värden. 
 
 - battery_charge_price
@@ -175,17 +202,17 @@ Skapa två input_number (via helper) för att kunna justera gränsvärdena för 
     - Stegläng: 0,1
     - Måttenhete SEK/kWH
 
-### Steg 16
+### Steg 18
 Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view.yaml. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
 
 > [!IMPORTANT]
-> Klistra in koden genom att klicka på "pennan" som finns brevid din nya vy i "rubriken". Välj därefter redigera i YAML. Klistra sen in hela koden där.
+> Klistra in koden genom att klicka på "pennan" som finns brevid din nya vy i "rubriken". Välj därefter redigera i YAML. Klistra sen in hela koden där. 
 
 > [!NOTE]
-> Du behöver installera följande custom intergration via HACS - Apexcharts-card, Layout-card, Stack-In-Card.
+> Installera följande custom intergration via HACS - Apexcharts-card, Layout-card, Stack-In-Card. [HACS](https://www.hacs.xyz/docs/use/)
+>
+> Installera SMHI tillägget och konfiguerar det utifrån din position. [SMHI](https://www.home-assistant.io/integrations/smhi/)
+>
+> Om du ändrat namn på dina entiteter behöver du justera dessa för att korten ska fungera.
 
-> [!NOTE]
-> Du behöver också installera SMHI tillägget och konfiguerar det utifrån din position 
 
-> [!NOTE]
-> Om något kort inte fungerar beror det troligtvis på att rätt entitet inte valts. 
