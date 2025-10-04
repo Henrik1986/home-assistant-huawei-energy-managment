@@ -174,9 +174,9 @@
                   {% if interval_raw and ' - ' in interval_raw %}
                   {% set start_dt = as_datetime(interval_raw.split(' - ')[0]) %}
                   {% set end_dt = as_datetime(interval_raw.split(' - ')[1]) %}
-                  {% set raw_today = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_today') or [] %}
-                  {% set raw_tomorrow = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_tomorrow') or [] %}
-                  {% set tomorrow_valid = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','tomorrow_valid') == true %}
+                  {% set raw_today = state_attr('sensor.YOUR_NORDPOOL_SENSOR','raw_today') or [] %}
+                  {% set raw_tomorrow = state_attr('sensor.YOUR_NORDPOOL_SENSOR','raw_tomorrow') or [] %}
+                  {% set tomorrow_valid = state_attr('sensor.YOUR_NORDPOOL_SENSOR','tomorrow_valid') == true %}
                   {% set ns = namespace(total=0.0, count=0) %}
 
                   {% set quarters = ((end_dt - start_dt).total_seconds() // 900) | int %}
@@ -537,9 +537,9 @@
                   {% if interval_raw and ' - ' in interval_raw %}
                   {% set start_dt = as_datetime(interval_raw.split(' - ')[0]) %}
                   {% set end_dt = as_datetime(interval_raw.split(' - ')[1]) %}
-                  {% set raw_today = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_today') or [] %}
-                  {% set raw_tomorrow = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_tomorrow') or [] %}
-                  {% set tomorrow_valid = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','tomorrow_valid') == true %}
+                  {% set raw_today = state_attr('sensor.YOUR_NORDPOOL_SENSOR','raw_today') or [] %}
+                  {% set raw_tomorrow = state_attr('sensor.YOUR_NORDPOOL_SENSOR','raw_tomorrow') or [] %}
+                  {% set tomorrow_valid = state_attr('sensor.YOUR_NORDPOOL_SENSOR','tomorrow_valid') == true %}
                   {% set ns = namespace(total=0.0, count=0) %}
 
                   {% set quarters = ((end_dt - start_dt).total_seconds() // 900) | int %}
