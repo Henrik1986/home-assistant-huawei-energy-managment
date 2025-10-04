@@ -5,7 +5,7 @@ description: >
 mode: single
 triggers:
   - trigger: time_pattern
-    minutes: "/15"  # Kontroll var 15:e minut
+    minutes: "/10"  # Kontroll var 10:e minut
 condition:
   - condition: state
     entity_id: input_boolean.manual_charge
@@ -14,15 +14,15 @@ action:
   - choose:
 # 1: TOU-LÄGE OM BATTERI HAR ÖVERSKOTT
       - conditions:
-# KONTROLLERAR WORK MODE - UNDVIKER ONÖDIGA ACTIONS
+          # KONTROLLERAR WORK MODE - UNDVIKER ONÖDIGA ACTIONS
           - condition: template
             value_template: > 
               {{ states('select.batteries_working_mode') != 'fully_fed_to_grid' }}
-# KONTROLLERAR OM ELEN ÄR DYR - GER TRUE OM LÄGE ATT SÄLJA
+          # KONTROLLERAR OM ELEN ÄR DYR - GER TRUE OM LÄGE ATT SÄLJA
           - condition: template
             value_template: >
-              {% set cur = states('sensor.YOUR_NORDPOOL_SENSOR') | float(0) %}
-              {% set prices = state_attr('sensor.YOUR_NORDPOOL_SENSOR','today') or [] %}
+              {% set cur = states('sensor.nordpool_kwh_se4_sek_1_10_0') | float(0) %}
+              {% set prices = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','today') or [] %}
               {% set threshold = states('input_number.expensive_electricity') | float(3) %}
 
               {% set over_threshold = prices | map('float') | select('>=', threshold) | list %}
@@ -34,7 +34,7 @@ action:
 
               {% set result = in_topN %}
               {{ result }}
-# KONTROLLERAR OM DET FINNS ETT ENERGIÖVERSKOTT I BATTERIET - GER TRUE OM DET FINNS
+          # KONTROLLERAR OM DET FINNS ETT ENERGIÖVERSKOTT I BATTERIET - GER TRUE OM DET FINNS
           - condition: template
             value_template: >
               {% set soc = states('sensor.batteries_state_of_capacity') | float(0) %}
@@ -43,36 +43,44 @@ action:
               {% set battery_kwh = (soc - end_soc)/100 * capacity %}
 
               {# Sensor 1 #}
-              {% set need_1 = (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_sun_interval') | float(0)) +
-                              (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_no_sun_interval') | float(0)) +
+              {% set sun_energy_1 = (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_sun_interval') | float(0)) - 
+                                     (state_attr('sensor.battery_charge_energy_1a_2','estimated_solar_energy') | float(0)) %}
+              {% if sun_energy_1 < 0 %}
+                  {% set sun_energy_1 = 0 %}
+              {% endif %}
+              {% set need_1 = sun_energy_1 + 
+                              (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_no_sun_interval') | float(0)) + 
                               (state_attr('sensor.battery_charge_energy_1a_2','buffer') | float(0)) %}
               {% set interval_1 = state_attr('sensor.battery_charge_energy_1a_2','search_interval') %}
               {% if interval_1 is string and ' - ' in interval_1 %}
-                {% set start_1, end_1 = interval_1.split(' - ') %}
-                {% set start_1 = start_1 | as_datetime %}
-                {% set end_1 = end_1 | as_datetime %}
-                {% set cond_1 = now() >= start_1 and now() <= end_1 and (battery_kwh - need_1) > 0 %}
+                  {% set start_1, end_1 = interval_1.split(' - ') %}
+                  {% set start_1 = start_1 | as_datetime %}
+                  {% set cond_1 = (battery_kwh - need_1) > 0 %}
               {% else %}
-                {% set cond_1 = false %}
+                  {% set cond_1 = false %}
               {% endif %}
 
               {# Sensor 2 #}
-              {% set need_2 = (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_sun_interval') | float(0)) +
-                              (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_no_sun_interval') | float(0)) +
+              {% set sun_energy_2 = (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_sun_interval') | float(0)) - 
+                                     (state_attr('sensor.battery_charge_energy_2_1b','estimated_solar_energy') | float(0)) %}
+              {% if sun_energy_2 < 0 %}
+                  {% set sun_energy_2 = 0 %}
+              {% endif %}
+              {% set need_2 = sun_energy_2 + 
+                              (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_no_sun_interval') | float(0)) + 
                               (state_attr('sensor.battery_charge_energy_2_1b','buffer') | float(0)) %}
               {% set interval_2 = state_attr('sensor.battery_charge_energy_2_1b','search_interval') %}
               {% if interval_2 is string and ' - ' in interval_2 %}
-                {% set start_2, end_2 = interval_2.split(' - ') %}
-                {% set start_2 = start_2 | as_datetime %}
-                {% set end_2 = end_2 | as_datetime %}
-                {% set cond_2 = now() >= start_2 and now() <= end_2 and (battery_kwh - need_2) > 0 %}
+                  {% set start_2, end_2 = interval_2.split(' - ') %}
+                  {% set start_2 = start_2 | as_datetime %}
+                  {% set cond_2 = (battery_kwh - need_2) > 0 %}
               {% else %}
-                {% set cond_2 = false %}
+                  {% set cond_2 = false %}
               {% endif %}
 
+              {# Vi vill ha TRUE om det finns ett överskott fram till nästa laddningsfönster #}
               {{ cond_1 or cond_2 }}
-
-# KONTROLLERAR OM ELPRISET ÄR LÅGT VID NÄSTA LADDNINGSFÖNSTER - GER TRUE OM DET ÄR DET
+          # KONTROLLERAR OM ELPRISET ÄR LÅGT VID NÄSTA LADDNINGSFÖNSTER - GER TRUE OM DET ÄR DET
           - condition: template
             value_template: >
               {%- set price_limit = states('input_number.battery_charge_price') | float(1.0) -%}
@@ -80,8 +88,8 @@ action:
                   states('sensor.battery_charge_window_cheapest_1a'),
                   states('sensor.battery_charge_window_cheapest_2')
               ] -%}
-              {%- set raw_today = state_attr('sensor.YOUR_NORDPOOL_SENSOR','raw_today') or [] -%}
-              {%- set raw_tomorrow = state_attr('sensor.YOUR_NORDPOOL_SENSOR','raw_tomorrow') or [] -%}
+              {%- set raw_today = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_today') or [] -%}
+              {%- set raw_tomorrow = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','raw_tomorrow') or [] -%}
               {%- set prices_all = raw_today + raw_tomorrow -%}
               {%- set now_dt = now() -%}
               {%- set chosen_interval = namespace(start=None, end=None, meets_condition=False) -%}
@@ -127,20 +135,21 @@ action:
 
 
       - conditions:
-          # Workmode måste alltid kontrolleras
+          # Workmode kontrolleras att det inte är i maximize self consumption eller time of use
           - condition: and
             conditions: 
               - condition: template
-                value_template: > 
-                  {{ states('select.batteries_working_mode') != 'maximise_self_consumption' }}
+                value_template: >-
+                   {{ states('select.batteries_working_mode') not in
+                    ['maximise_self_consumption','time_of_use_luna2000'] }}
           # Någon av dessa två måste vara TRUE
               - condition: or
                 conditions:
-                  # ELPRIS - Om det inte är läge att sälja
+                  # ELPRIS - Om det inte är läge att sälja visas true
                   - condition: template
                     value_template: >
-                      {% set cur = states('sensor.YOUR_NORDPOOL_SENSOR') | float(0) %}
-                      {% set prices = state_attr('YOUR_NORDPOOL_SENSOR','today') or [] %}
+                      {% set cur = states('sensor.nordpool_kwh_se4_sek_1_10_0') | float(0) %}
+                      {% set prices = state_attr('sensor.nordpool_kwh_se4_sek_1_10_0','today') or [] %}
                       {% set threshold = states('input_number.expensive_electricity') | float(3) %}
                       {% set over_threshold = prices | map('float') | select('>=', threshold) | list %}
                       {% set sorted_desc = over_threshold | sort(reverse=true) %}
@@ -149,7 +158,7 @@ action:
                       {{ not in_topN }}
 
 
-                  # ÖVERSKOTT - Om inget överskott finns
+                  # ÖVERSKOTT - Om inget överskott finns visas true
                   - condition: template
                     value_template: >
                       {% set soc = states('sensor.batteries_state_of_capacity') | float(0) %}
@@ -158,34 +167,44 @@ action:
                       {% set battery_kwh = (soc - end_soc)/100 * capacity %}
 
                       {# Sensor 1 #}
-                      {% set need_1 = (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_sun_interval') | float(0)) +
-                                      (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_no_sun_interval') | float(0)) +
+                      {% set sun_energy_1 = (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_sun_interval') | float(0)) - 
+                                               (state_attr('sensor.battery_charge_energy_1a_2','estimated_solar_energy') | float(0)) %}
+                      {% if sun_energy_1 < 0 %}
+                          {% set sun_energy_1 = 0 %}
+                      {% endif %}
+                      {% set need_1 = sun_energy_1 + 
+                                      (state_attr('sensor.battery_charge_energy_1a_2','estimated_energy_no_sun_interval') | float(0)) + 
                                       (state_attr('sensor.battery_charge_energy_1a_2','buffer') | float(0)) %}
                       {% set interval_1 = state_attr('sensor.battery_charge_energy_1a_2','search_interval') %}
                       {% if interval_1 is string and ' - ' in interval_1 %}
-                        {% set start_1, end_1 = interval_1.split(' - ') %}
-                        {% set start_1 = start_1 | as_datetime %}
-                        {% set end_1 = end_1 | as_datetime %}
-                        {% set cond_1 = now() >= start_1 and now() <= end_1 and (battery_kwh - need_1) > 0 %}
+                          {% set start_1, end_1 = interval_1.split(' - ') %}
+                          {% set start_1 = start_1 | as_datetime %}
+                          {% set cond_1 = (battery_kwh - need_1) > 0 %}
                       {% else %}
-                        {% set cond_1 = false %}
+                          {% set cond_1 = false %}
                       {% endif %}
 
                       {# Sensor 2 #}
-                      {% set need_2 = (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_sun_interval') | float(0)) +
-                                      (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_no_sun_interval') | float(0)) +
+                      {% set sun_energy_2 = (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_sun_interval') | float(0)) - 
+                                                (state_attr('sensor.battery_charge_energy_2_1b','estimated_solar_energy') | float(0)) %}
+                      {% if sun_energy_2 < 0 %}
+                          {% set sun_energy_2 = 0 %}
+                      {% endif %}
+                      {% set need_2 = sun_energy_2 + 
+                                      (state_attr('sensor.battery_charge_energy_2_1b','estimated_energy_no_sun_interval') | float(0)) + 
                                       (state_attr('sensor.battery_charge_energy_2_1b','buffer') | float(0)) %}
                       {% set interval_2 = state_attr('sensor.battery_charge_energy_2_1b','search_interval') %}
                       {% if interval_2 is string and ' - ' in interval_2 %}
-                        {% set start_2, end_2 = interval_2.split(' - ') %}
-                        {% set start_2 = start_2 | as_datetime %}
-                        {% set end_2 = end_2 | as_datetime %}
-                        {% set cond_2 = now() >= start_2 and now() <= end_2 and (battery_kwh - need_2) > 0 %}
+                          {% set start_2, end_2 = interval_2.split(' - ') %}
+                          {% set start_2 = start_2 | as_datetime %}
+                          {% set cond_2 = (battery_kwh - need_2) > 0 %}
                       {% else %}
-                        {% set cond_2 = false %}
+                          {% set cond_2 = false %}
                       {% endif %}
- 
+
+                      {# Vi vill ha TRUE om det inte finns något överskott fram till nästa laddningsfönster #}
                       {{ not (cond_1 or cond_2) }}
+
         sequence:
           - service: input_boolean.turn_off
             target:
