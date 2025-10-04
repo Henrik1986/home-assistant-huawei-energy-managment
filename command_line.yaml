@@ -15,3 +15,20 @@
   #:az - plane azimuth, -180 … 180 (-180 = north, -90 = east, 0 = south, 90 = west, 180 = north); integer
   #:kwp - installed modules power in kilo watt; float
   # https://doc.forecast.solar/api:estimate 
+
+
+# ADJUST THE VALUE BELOW TO YOUR POSITION AND SOLAR SETUP
+# https://api.forecast.solar/estimate/:lat/:lon/:dec/:az/:kwp 
+#
+# Example:
+# https://api.forecast.solar/estimate/59.33/18.06/30/180/9.72
+#
+# Explanation:
+# :lat  -> 59.33   (approx. latitude for Stockholm, Sweden)
+# :lon  -> 18.06   (approx. longitude for Stockholm, Sweden)
+# :dec  -> 30      (panel tilt angle in degrees)
+# :az   -> 180     (facing south)
+# :kwp  -> 9.72    (installed panel capacity in kWp)
+#
+# For more details, see:
+# https://doc.forecast.solar/api:estimate
