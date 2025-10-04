@@ -143,17 +143,22 @@ Skapa två automationer som kommer att styra om batteriet ska laddas eller inte.
 > Utvecklarverktyg -> Åtgärder -> Klicka på åtgärd -> Skriv huawei -> Välj forcible charge -> Klicka på gå till UI-läge -> Välj Batteries i rullgardinen på raden battery -> Klicka på gå till YAML-läge - Då ska du få fram till device_id
 
 ### Steg 12
+Skapa två input_boolean (via helper) för att inte laddningsautomationerna ska påverka varandra. Ge dem följande namn: 
+- interval_1a
+- interval_2
+  
+### Steg 13
 Skapa en input_boolean (via helper) som avaktiverar samtliga automationer för att kunna ladda manuelt. Ge den med följande namn: 
 - manual_charge
 
-### Steg 13
+### Steg 14
 Skapa en automation som kommer att styra om batteriet ska sälja om elpriser är högt och kommande elpris är lågt. I mappen automations heter denna
 - battery_luna_2000_S1_discharge.yaml
 
 > [!IMPORTANT]
 > Lägg in din Nordpool-sensor
 
-### Steg 14
+### Steg 15
 Skapa två input_number (via helper) för att kunna justera gränsvärdena för att sälja överskottet. Ge input_number förljande värden. 
 
 - battery_charge_price
@@ -170,7 +175,7 @@ Skapa två input_number (via helper) för att kunna justera gränsvärdena för 
     - Stegläng: 0,1
     - Måttenhete SEK/kWH
 
-### Steg 15
+### Steg 16
 Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view.yaml. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
 
 > [!IMPORTANT]
