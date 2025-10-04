@@ -6,7 +6,7 @@ mode: single
 
 trigger:
   - platform: time_pattern
-    minutes: "/15"  # Kontroll var 15:e minut
+    minutes: "/10"  # Kontroll var 10:e minut
 
 condition:
   - condition: state
@@ -32,8 +32,11 @@ action:
                 {{ start_time <= now_time <= end_time and needed_kwh > 0 }}
               {% endif %}
           - condition: template
-            value_template: "{{ states('select.batteries_working_mode') != 'time_of_use_luna2000' }}" # HINDRAR ONÖDIGA ÄNDRINGAR
+            value_template: "{{ states('select.batteries_working_mode') != 'time_of_use_luna2000' }}" 
         sequence:
+          - action: input_boolean.turn_on
+            target: 
+              entity_id: input_boolean.interval_1a 
           - action: huawei_solar.set_tou_periods
             data:
               device_id: ADD YOUR ID
@@ -43,7 +46,7 @@ action:
             target:
               entity_id: select.batteries_working_mode
             data:
-              option: "time_of_use_luna2000"  # Sätt batteriet i ToU-läge
+              option: "time_of_use_luna2000"  
 
 
       # 2: Standardläge Maximize self-consumption annars
@@ -62,10 +65,15 @@ action:
                 {{ start_time <= now_time <= end_time and needed_kwh <= 0 }}
               {% endif %}
           - condition: template
-            value_template: "{{ states('select.batteries_working_mode') != 'maximise_self_consumption' }}" #HINDRAR ONÖDIGA ÄNDRINGAR
+            value_template: >-
+                {{ states('select.batteries_working_mode') not in
+                   ['maximise_self_consumption','fully_fed_to_grid'] }} 
+          - condition: state
+            entity_id: input_boolean.interval_1a
+            state: 'on' 
         sequence:
           - service: select.select_option
             target:
               entity_id: select.batteries_working_mode
             data:
-              option: "maximise_self_consumption"  # Standardläge vilket fokuserar på självförsörjning
+              option: "maximise_self_consumption" 
