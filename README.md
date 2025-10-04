@@ -172,3 +172,14 @@ Skapa två input_number (via helper) för att kunna justera gränsvärdena för 
 ### Steg 15
 Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view.yaml. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
 
+> [!IMPORTANT]
+> Klistra in koden genom att klicka på "pennan" som finns brevid din nya vy i "rubriken". Välj därefter redigera i YAML. Klistra sen in hela koden där.
+
+> [!NOTE]
+> Du behöver installera följande custom intergration via HACS - Apexcharts-card, Layout-card, Stack-In-Card.
+
+> [!NOTE]
+> Du behöver också installera SMHI tillägget och konfiguerar det utifrån din position 
+
+> [!NOTE]
+> Om något kort inte fungerar beror det troligtvis på att rätt entitet inte valts. 
