@@ -182,6 +182,10 @@ Skapa en automation som kommer att styra om batteriet ska sälja om elpriser är
 > Lägg in din Nordpool-sensor i automationen
 
 ### Steg 17
+Skapa en input_boolean (via helper) som används för att kontrollera om systemet säljer energi från batteriet. Ge den följande namn:
+- discharge
+
+### Steg 17
 Skapa två input_number (via helper) för att kunna justera gränsvärdena för att sälja överskottet. Ge input_number förljande värden. 
 
 - battery_charge_price
