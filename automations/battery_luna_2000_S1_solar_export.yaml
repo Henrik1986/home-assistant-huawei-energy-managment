@@ -35,7 +35,3 @@ action:
             target:
               entity_id: input_boolean.max_export_active
 mode: single
-
-
-# SKAPA EN INPUT_BOOLEAN SOM HETER export_limit_active FÖR ATT AKTIVERA ELLER AVAKTIVERAR EXPORT BEGRÄNSNINGEN VIA UI
-# SKAPA EN INPUT_BOOLEAN SOM HETER max_export_active FÖR ATT UNDVIKA OMÖDIGA ÄNDRINGAR
