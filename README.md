@@ -163,25 +163,25 @@ Skapa två input_boolean (via helper) för att inte laddningsautomationerna ska 
 - interval_1a
 - interval_2
 
-### Steg 14
+### Steg 13
 Skapa en automation som kommer att användas för att starta och avslutla laddning manuellt. I mapppen automation heter denna
 - battery_luna_2000_S1_manual_charge.yaml
 
 > [!IMPORTANT]
 > Lägg till ditt Huawei device_id i automationen
   
-### Steg 15
+### Steg 14
 Skapa en input_boolean (via helper) som startar/avslutar laddningen manuellt. Ge den följande namn: 
 - manual_charge
 
-### Steg 16
+### Steg 15
 Skapa en automation som kommer att styra om batteriet ska sälja om elpriser är högt och kommande elpris är lågt. I mappen automations heter denna
 - battery_luna_2000_S1_discharge.yaml
 
 > [!IMPORTANT]
 > Lägg in din Nordpool-sensor i automationen
 
-### Steg 17
+### Steg 16
 Skapa en input_boolean (via helper) som används för att kontrollera om systemet säljer energi från batteriet. Ge den följande namn:
 - discharge
 
