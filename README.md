@@ -43,13 +43,13 @@ Bilden ovan visar adminvyn via Home Assistant
 Skapa SQL-sensorer (finns i mappen sql-sensor) för att följa din energiförbrukning. SQL-sensorer beräknar kWh/h för de senaste 3 dagarna. Antalet dagar går att justera i koden. Skapar SQL-sensorer via [integrationer](https://www.home-assistant.io/integrations/sql/)
 
 - Namn: Använd samma namn som filen som du hämtar frågan (välj fråga) ifrån
-- Databas URL: INGET
+- Databas URL: LÄMNA TOMT
 - Kolumn: avg_kwh_per_hour
 - Välj-fråga: Finns i filerna i mappen sql-sensorer
 - Måttenhet: kWh/h
-- Värdemall: INGET
-- Enhetsklass: INGET
-- Tillståndsklass: INGET
+- Värdemall: LÄMNA TOMT
+- Enhetsklass: LÄMNA TOMT
+- Tillståndsklass: LÄMNA TOMT
 
 > [!IMPORTANT]
 > Ersätt sensor.energy_total_exl_elbil om du valde något annat namn i steg 1. 
