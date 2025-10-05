@@ -171,7 +171,7 @@ Skapa en automation som kommer att användas för att starta och avslutla laddni
 > Lägg till ditt Huawei device_id i automationen
   
 ### Steg 15
-Skapa en input_boolean (via helper) som startar/avslutar laddningen manuellt. Ge den med följande namn: 
+Skapa en input_boolean (via helper) som startar/avslutar laddningen manuellt. Ge den följande namn: 
 - manual_charge
 
 ### Steg 16
