@@ -15,7 +15,6 @@ The smart charging logic search for cheap charging intervals when new electricit
 
 💥 BONUS! 
 - Battery discharge can be limited to only cover the home’s demand, which is useful when charging an EV (battery_luna_2000_S1_ev_protection.yaml in dictionary automations)
-- Automation that limits solar power export when the electricity price is zero or lower (battery_luna_2000_S1_solar_export.yaml in dictionary automations)
 
 <img width="1850" height="783" alt="Skärmbild 2025-10-04 154057" src="https://github.com/user-attachments/assets/c10d29ba-81ae-4afb-9aa9-de6e968bd0a6" />
 
@@ -203,6 +202,22 @@ Skapa två input_number (via helper) för att kunna justera gränsvärdena för 
     - Måttenhete SEK/kWH
 
 ### Steg 18
+Skapa två input_bolean (via helper) för kontroll om exporten av solel ska tillåtas eller begränsas. Ge dem följande namn
+- export_limit_active (används för att aktivera eller avaktivera funktionen)
+- max_export_active (används för att visa i UI om exporten är begränsad eller inte)
+
+
+### Steg 19
+Skapa en automation som kommer kommer att tillåta eller brgränsa export av överskottet från solcellerna. Då elpriset är 0 eller negativt begränsas exporten. I mappen automations heter denna
+
+- battery_luna_2000_S1_solar_export.yaml
+
+> [!IMPORTANT]
+> Lägg in din Nordpool-sensor i automationen
+>
+> Lägg till ditt Huawei device_id i automationen
+
+### Steg 20
 Skapa en ny vy i Home Assistant och lägg in koden från filen admin_view.yaml. Via den nya vyn kan du nu justera värdena som styr laddningslogiken men även följa hur laddningslogiken arbetar. 
 
 > [!IMPORTANT]
