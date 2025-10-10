@@ -1,4 +1,4 @@
-SELECT AVG(e_kwh) / 3.0 as avg_kwh_per_hour
+SELECT AVG(e_kwh) / 6.0 as avg_kwh_per_hour
 FROM (
     SELECT
         (
